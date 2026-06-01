@@ -72,11 +72,17 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
 
-  const filtered = rows.filter(r =>
+  const q = search.toLowerCase()
+  const filtered = !q ? rows : rows.filter(r =>
     r.destino.includes(search) ||
-    r.parametros.toLowerCase().includes(search.toLowerCase()) ||
-    r.estatus.toLowerCase().includes(search.toLowerCase()) ||
-    r.plantilla.toLowerCase().includes(search.toLowerCase())
+    r.parametros.toLowerCase().includes(q) ||
+    r.estatus.toLowerCase().includes(q) ||
+    normalizeStatus(r.estatus).toLowerCase().includes(q) ||
+    r.plantilla.toLowerCase().includes(q) ||
+    r.leido.toLowerCase().includes(q) ||
+    r.respuesta.toLowerCase().includes(q) ||
+    r.fechaEnvio.includes(search) ||
+    traducirComentario(r.comentario).toLowerCase().includes(q)
   )
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE))
   const cur = Math.min(page, totalPages)
