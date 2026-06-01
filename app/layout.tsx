@@ -10,8 +10,8 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "MultinetMarket — Análisis de Campañas WhatsApp",
-  description: "Dashboard de analítica para campañas masivas de WhatsApp",
+  title: "MultinetMarket — Mensajes masivos marketing",
+  description: "Dashboard de analítica para mensajes masivos de marketing",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="flex items-center gap-2">
               <span className="text-xs px-2.5 py-1 rounded-full font-medium"
                 style={{ background: "var(--brand-light)", color: "var(--brand)" }}>
-                Campañas WhatsApp
+                Mensajes masivos
               </span>
             </div>
           </div>
