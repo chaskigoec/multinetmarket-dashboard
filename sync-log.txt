@@ -1,0 +1,20 @@
+[2026-05-31 21:28:33] === Sincronizacion MultinetMarket â†’ http://localhost:3000 ===
+[2026-05-31 21:28:33] Carpeta no encontrada: C:\Users\PaoloJÃ¡come\OneDrive - ChaskiGo\Documentos - OPERACIONES CHASKI\PROYECTOS\2026\MULTINETMARKET\ETAPA\Resultados
+[2026-05-31 21:28:57] === Sincronizacion MultinetMarket â†’ http://localhost:3000 ===
+[2026-05-31 21:28:57] Encontrados 3 archivo(s) Excel.
+[2026-05-31 21:28:57] Sincronizando: etapa_29052026161016.xlsx
+[2026-05-31 21:28:57]   Cargada OK: etapa_29052026161016 (id: 6c5e2bfe-225e-461e-85a3-411c6a5c52e2)
+[2026-05-31 21:28:57] Sincronizando: Campaña 1 Etapa_28052026 (1).xlsx
+[2026-05-31 21:28:57]   Cargada OK: etapa_280520261539 (id: 3f17fae8-8805-48bf-8942-5fed4fdaa255)
+[2026-05-31 21:28:57] Sincronizando: Campaña 2 Etapa_28052026 (1).xlsx
+[2026-05-31 21:28:57]   Cargada OK: etapa_28052026153902 (id: 8f3731a5-2097-4262-b2c4-cfe3db06c6d8)
+[2026-05-31 21:28:57] Sincronizacion completada. Dashboard: http://localhost:3000
+[2026-05-31 21:29:07] === Sincronizacion MultinetMarket â†’ http://localhost:3000 ===
+[2026-05-31 21:29:07] Encontrados 3 archivo(s) Excel.
+[2026-05-31 21:29:07] Sincronizando: etapa_29052026161016.xlsx
+[2026-05-31 21:29:07]   Ya existia: etapa_29052026161016
+[2026-05-31 21:29:07] Sincronizando: Campaña 1 Etapa_28052026 (1).xlsx
+[2026-05-31 21:29:07]   Cargada OK: etapa_280520261539 (id: 7cdea2a7-0f5e-43e4-adc8-9e7409e8a500)
+[2026-05-31 21:29:07] Sincronizando: Campaña 2 Etapa_28052026 (1).xlsx
+[2026-05-31 21:29:07]   Cargada OK: etapa_28052026153902 (id: 28e4eff0-4883-426a-9b14-4683ffff93c4)
+[2026-05-31 21:29:07] Sincronizacion completada. Dashboard: http://localhost:3000
