@@ -9,8 +9,9 @@
 # =============================================================
 
 param(
-    [string]$Url = "http://localhost:3000",
-    [switch]$Watch
+    [string]$Url = "https://multinetmarket-dashboard.vercel.app",
+    [switch]$Watch,
+    [switch]$InstalarTarea  # Registra una tarea en Windows Task Scheduler
 )
 
 # Carpeta donde YCloud guarda los resultados
@@ -129,6 +130,18 @@ if ($Watch) {
     }
 }
 else {
+    # --- INSTALAR TAREA PROGRAMADA ---
+    if ($InstalarTarea) {
+        $scriptPath = $MyInvocation.MyCommand.Path
+        $action = New-ScheduledTaskAction -Execute "pwsh.exe" -Argument "-NonInteractive -File `"$scriptPath`" -Url $Url"
+        $trigger = New-ScheduledTaskTrigger -RepetitionInterval (New-TimeSpan -Minutes 15) -Once -At (Get-Date)
+        $settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 5) -RunOnlyIfNetworkAvailable
+        Register-ScheduledTask -TaskName "MultinetMarket-Sync" -Action $action -Trigger $trigger -Settings $settings -RunLevel Highest -Force | Out-Null
+        Write-Log "Tarea programada instalada: se sincronizara cada 15 minutos." "Green"
+        Write-Log "Para desinstalar: Unregister-ScheduledTask -TaskName 'MultinetMarket-Sync' -Confirm:`$false" "Gray"
+        return
+    }
+
     # --- MODO SINCRONIZACIÓN ÚNICA ---
     Write-Log "=== Sincronizacion MultinetMarket → $Url ===" "Magenta"
     Sync-All

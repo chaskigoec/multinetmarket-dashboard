@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parseExcel } from '@/lib/excel'
 import { saveCampaign, getIndex } from '@/lib/kv'
+import { encodeId } from '@/lib/folder'
 
 export const runtime = 'nodejs'
 
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
     const index = await getIndex()
     const alreadyExists = index.find(c => c.filename === file.name)
     if (alreadyExists) {
-      return NextResponse.json({ id: alreadyExists.id, nombre: alreadyExists.nombre, skipped: true })
+      return NextResponse.json({ id: encodeId(alreadyExists.filename), nombre: alreadyExists.nombre, skipped: true })
     }
 
     const campaign = parseExcel(buffer, file.name)
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
       storeBlob(buffer, file.name),
     ])
 
-    return NextResponse.json({ id: campaign.id, nombre: campaign.nombre, skipped: false })
+    return NextResponse.json({ id: encodeId(file.name), nombre: campaign.nombre, skipped: false })
   } catch (err) {
     console.error('Upload error:', err)
     return NextResponse.json({ error: 'Error al procesar el archivo' }, { status: 500 })
