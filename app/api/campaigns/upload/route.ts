@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parseExcel } from '@/lib/excel'
 import { saveCampaign, getIndex } from '@/lib/kv'
-import { encodeId } from '@/lib/folder'
+import { encodeId } from '@/lib/utils'
 
 export const runtime = 'nodejs'
 

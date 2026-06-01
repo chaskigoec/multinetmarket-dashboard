@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { decodeId, readCampaign } from "@/lib/folder";
+import { readCampaign } from "@/lib/folder";
+import { decodeId } from "@/lib/utils";
 import { KPICard } from "@/components/KPICard";
 import { DonutChart } from "@/components/charts/DonutChart";
 import { PerformanceChart } from "@/components/charts/PerformanceChart";

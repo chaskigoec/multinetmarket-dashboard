@@ -1,6 +1,9 @@
 import path from 'path'
 import fs from 'fs'
 import { parseExcel, ParsedCampaign } from './excel'
+import { encodeId, decodeId } from './utils'
+
+export { encodeId, decodeId }
 
 export const RESULTADOS_FOLDER = path.join(
   process.env.USERPROFILE ?? process.env.HOME ?? '',
@@ -15,13 +18,6 @@ export const RESULTADOS_FOLDER = path.join(
 
 const IS_VERCEL = !!process.env.VERCEL
 
-export function encodeId(filename: string) {
-  return Buffer.from(filename).toString('base64url')
-}
-
-export function decodeId(id: string) {
-  return Buffer.from(id, 'base64url').toString('utf8')
-}
 
 export function listExcelFiles(): { filename: string; id: string; mtime: Date }[] {
   if (IS_VERCEL || !fs.existsSync(RESULTADOS_FOLDER)) return []

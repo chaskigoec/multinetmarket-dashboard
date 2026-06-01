@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ParsedCampaign } from '@/lib/excel'
-import { encodeId } from '@/lib/folder'
+import { encodeId } from '@/lib/utils'
 
 interface CampaignListProps {
   campaigns: ParsedCampaign[]
