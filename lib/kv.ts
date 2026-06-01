@@ -1,9 +1,10 @@
+import { Redis } from '@upstash/redis'
 import { ParsedCampaign } from './excel'
 
 export interface CampaignIndex {
   id: string
   nombre: string
-  filename: string   // nombre original del archivo .xlsx para deduplicación
+  filename: string
   fechaCarga: string
   total: number
   enviados: number
@@ -11,10 +12,8 @@ export interface CampaignIndex {
   fallidos: number
 }
 
-import { Redis } from '@upstash/redis'
-
 // In-memory fallback for local dev without KV credentials
-const memStore: Record<string, string> = {}
+const memStore: Record<string, unknown> = {}
 
 function getRedis(): Redis | null {
   if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) return null
@@ -24,14 +23,13 @@ function getRedis(): Redis | null {
   })
 }
 
-async function kvGet(key: string): Promise<string | null> {
+async function kvGet<T>(key: string): Promise<T | null> {
   const redis = getRedis()
-  if (!redis) return memStore[key] ?? null
-  const val = await redis.get<string>(key)
-  return val ?? null
+  if (!redis) return (memStore[key] as T) ?? null
+  return redis.get<T>(key)
 }
 
-async function kvSet(key: string, value: string): Promise<void> {
+async function kvSet<T>(key: string, value: T): Promise<void> {
   const redis = getRedis()
   if (!redis) { memStore[key] = value; return }
   await redis.set(key, value)
@@ -44,7 +42,7 @@ async function kvDel(key: string): Promise<void> {
 }
 
 export async function saveCampaign(campaign: ParsedCampaign, filename?: string): Promise<void> {
-  await kvSet(`campaign:${campaign.id}`, JSON.stringify(campaign))
+  await kvSet<ParsedCampaign>(`campaign:${campaign.id}`, campaign)
 
   const existing = await getIndex()
   const entry: CampaignIndex = {
@@ -58,31 +56,20 @@ export async function saveCampaign(campaign: ParsedCampaign, filename?: string):
     fallidos: campaign.metrics.fallidos,
   }
   const updated = [entry, ...existing.filter(c => c.filename !== entry.filename)]
-  await kvSet('campaigns:index', JSON.stringify(updated))
+  await kvSet<CampaignIndex[]>('campaigns:index', updated)
 }
 
 export async function getIndex(): Promise<CampaignIndex[]> {
-  const raw = await kvGet('campaigns:index')
-  if (!raw) return []
-  try {
-    return JSON.parse(raw) as CampaignIndex[]
-  } catch {
-    return []
-  }
+  const raw = await kvGet<CampaignIndex[]>('campaigns:index')
+  return raw ?? []
 }
 
 export async function getCampaign(id: string): Promise<ParsedCampaign | null> {
-  const raw = await kvGet(`campaign:${id}`)
-  if (!raw) return null
-  try {
-    return JSON.parse(raw) as ParsedCampaign
-  } catch {
-    return null
-  }
+  return kvGet<ParsedCampaign>(`campaign:${id}`)
 }
 
 export async function deleteCampaign(id: string): Promise<void> {
   await kvDel(`campaign:${id}`)
   const existing = await getIndex()
-  await kvSet('campaigns:index', JSON.stringify(existing.filter(c => c.id !== id)))
+  await kvSet<CampaignIndex[]>('campaigns:index', existing.filter(c => c.id !== id))
 }
