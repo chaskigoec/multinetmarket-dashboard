@@ -11,34 +11,36 @@ export interface CampaignIndex {
   fallidos: number
 }
 
+import { Redis } from '@upstash/redis'
+
 // In-memory fallback for local dev without KV credentials
 const memStore: Record<string, string> = {}
 
+function getRedis(): Redis | null {
+  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) return null
+  return new Redis({
+    url: process.env.KV_REST_API_URL,
+    token: process.env.KV_REST_API_TOKEN,
+  })
+}
+
 async function kvGet(key: string): Promise<string | null> {
-  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
-    return memStore[key] ?? null
-  }
-  const { kv } = await import('@vercel/kv')
-  const val = await kv.get<string>(key)
+  const redis = getRedis()
+  if (!redis) return memStore[key] ?? null
+  const val = await redis.get<string>(key)
   return val ?? null
 }
 
 async function kvSet(key: string, value: string): Promise<void> {
-  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
-    memStore[key] = value
-    return
-  }
-  const { kv } = await import('@vercel/kv')
-  await kv.set(key, value)
+  const redis = getRedis()
+  if (!redis) { memStore[key] = value; return }
+  await redis.set(key, value)
 }
 
 async function kvDel(key: string): Promise<void> {
-  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
-    delete memStore[key]
-    return
-  }
-  const { kv } = await import('@vercel/kv')
-  await kv.del(key)
+  const redis = getRedis()
+  if (!redis) { delete memStore[key]; return }
+  await redis.del(key)
 }
 
 export async function saveCampaign(campaign: ParsedCampaign, filename?: string): Promise<void> {
