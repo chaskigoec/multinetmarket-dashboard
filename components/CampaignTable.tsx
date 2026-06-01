@@ -66,11 +66,12 @@ function StatusBadge({ estatus }: { estatus: string }) {
   )
 }
 
-const PAGE = 50
+const PAGE_SIZES = [10, 20, 50, 100]
 
 export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
 
   const q = search.toLowerCase()
   const filtered = !q ? rows : rows.filter(r =>
@@ -84,9 +85,9 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
     r.fechaEnvio.includes(search) ||
     traducirComentario(r.comentario).toLowerCase().includes(q)
   )
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE))
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const cur = Math.min(page, totalPages)
-  const slice = filtered.slice((cur - 1) * PAGE, cur * PAGE)
+  const slice = filtered.slice((cur - 1) * pageSize, cur * pageSize)
 
   const exportCSV = () => {
     const h = ['Destino', 'Nombre', 'Estatus', 'Fecha de envío', 'Leído', 'Respondido', 'Plantilla']
@@ -113,6 +114,16 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
           Detalle de mensajes
         </p>
         <div className="flex items-center gap-3">
+          <select
+            value={pageSize}
+            onChange={e => { setPageSize(Number(e.target.value)); setPage(1) }}
+            className="text-xs outline-none rounded-lg px-2 py-1.5 cursor-pointer"
+            style={{ border: "1px solid var(--border-soft)", background: "var(--surface)", color: "var(--ink-2)" }}
+          >
+            {PAGE_SIZES.map(s => (
+              <option key={s} value={s}>{s} por página</option>
+            ))}
+          </select>
           <input
             type="text"
             placeholder="Buscar número, estado..."
@@ -177,7 +188,13 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
       {/* Pagination */}
       <div className="flex items-center justify-between px-5 py-3 text-xs"
         style={{ borderTop: "1px solid var(--border-soft)", color: "var(--ink-3)" }}>
-        <span>{filtered.length.toLocaleString('es-EC')} registros</span>
+        <span>
+          {filtered.length === 0 ? '0 registros' : (
+            <>
+              {((cur - 1) * pageSize + 1).toLocaleString('es-EC')}–{Math.min(cur * pageSize, filtered.length).toLocaleString('es-EC')} de {filtered.length.toLocaleString('es-EC')}
+            </>
+          )}
+        </span>
         <div className="flex items-center gap-1">
           <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={cur === 1}
             className="px-2.5 py-1 rounded font-medium disabled:opacity-30"
