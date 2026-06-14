@@ -31,6 +31,10 @@ export interface CampaignMetrics {
   respuestasPct: number
   fallidosPorError: { tipo: string; cantidad: number }[]
   novedadesDiarias: { fecha: string; entregados: number }[]
+  enviosPorMinuto: { minuto: string; cantidad: number }[]
+  pico: number
+  duracionSegundos: number
+  tasaPromedio: number
 }
 
 export interface ParsedCampaign {
@@ -93,21 +97,23 @@ export function parseExcel(buffer: ArrayBuffer, filename: string): ParsedCampaig
   const ws = wb.Sheets[wb.SheetNames[0]]
   const raw = XLSX.utils.sheet_to_json<Record<string, string>>(ws)
 
+  const str = (v: unknown): string => (v == null ? '' : String(v))
+
   const rows: CampaignRow[] = raw.map((r, i) => ({
     id: String(i),
-    destino:             r['Destino']                    ?? r['destino']        ?? r['phone'] ?? '',
-    parametros:          r['Parámetros']                 ?? r['Parametros']     ?? r['nombre_corto'] ?? '',
-    estatus:             r['Estatus']                    ?? r['estatus']        ?? r['Status'] ?? '',
-    leido:               r['Leido']                      ?? r['Leído']          ?? '',
-    fechaEnvio:          r['Fecha de envio']             ?? r['Fecha de envío'] ?? '',
-    fechaEntregaCanal:   r['Fecha de entrega al canal']  ?? '',
-    fechaEntregaUsuario: r['Fecha de entrega al usuario'] ?? '',
-    fechaLectura:        r['Fecha de lectura por usuario'] ?? '',
-    respuesta:           r['Respuesta'] ?? '',
-    plantilla:           r['Plantilla'] ?? r['plantilla'] ?? '',
-    comentario:          r['Comentario'] ?? '',
-    origen:              r['Origen'] ?? '',
-    campanaNombre:       r['Campaña'] ?? r['campaign_name'] ?? filename.replace(/\.xlsx?$/i, ''),
+    destino:             str(r['Destino']                     ?? r['destino']        ?? r['phone']),
+    parametros:          str(r['Parámetros']                  ?? r['Parametros']     ?? r['nombre_corto']),
+    estatus:             str(r['Estatus']                     ?? r['estatus']        ?? r['Status']),
+    leido:               str(r['Leido']                       ?? r['Leído']),
+    fechaEnvio:          str(r['Fecha de envio']              ?? r['Fecha de envío']),
+    fechaEntregaCanal:   str(r['Fecha de entrega al canal']),
+    fechaEntregaUsuario: str(r['Fecha de entrega al usuario']),
+    fechaLectura:        str(r['Fecha de lectura por usuario']),
+    respuesta:           str(r['Respuesta']),
+    plantilla:           str(r['Plantilla']                   ?? r['plantilla']),
+    comentario:          str(r['Comentario']),
+    origen:              str(r['Origen']),
+    campanaNombre:       str(r['Campaña']                     ?? r['campaign_name'] ?? filename.replace(/\.xlsx?$/i, '')),
   }))
 
   const total = rows.length
@@ -145,6 +151,29 @@ export function parseExcel(buffer: ArrayBuffer, filename: string): ParsedCampaig
     .map(([fecha, entregados]) => ({ fecha, entregados }))
     .sort((a, b) => a.fecha.localeCompare(b.fecha))
 
+  // Envíos por minuto: todos los rows agrupados por "YYYY-MM-DD HH:MM"
+  const minuteMap: Record<string, number> = {}
+  rows.forEach(r => {
+    const minuto = r.fechaEnvio.slice(0, 16)
+    if (minuto) minuteMap[minuto] = (minuteMap[minuto] ?? 0) + 1
+  })
+  const enviosPorMinuto = Object.entries(minuteMap)
+    .map(([minuto, cantidad]) => ({ minuto, cantidad }))
+    .sort((a, b) => a.minuto.localeCompare(b.minuto))
+
+  const pico = enviosPorMinuto.length > 0 ? Math.max(...enviosPorMinuto.map(e => e.cantidad)) : 0
+
+  // Duración usando timestamps completos con segundos (no truncados a minuto)
+  const tsRows = rows.map(r => r.fechaEnvio).filter(Boolean).sort()
+  const parseTs = (s: string) => new Date(s.replace(' ', 'T')).getTime()
+  const duracionSegundos = tsRows.length > 1
+    ? Math.round((parseTs(tsRows[tsRows.length - 1]) - parseTs(tsRows[0])) / 1000)
+    : 0
+  // Si todo se envió en <1 min, la tasa es total msgs (ocurrieron en ese intervalo)
+  const tasaPromedio = duracionSegundos > 0
+    ? Math.round((total / (duracionSegundos / 60)) * 10) / 10
+    : enviosPorMinuto.length > 0 ? total : 0
+
   const pct = (n: number) => total > 0 ? Math.round((n / total) * 1000) / 10 : 0
 
   // Fecha real de la campaña: el datetime más temprano de fechaEnvio (conserva hora)
@@ -174,6 +203,10 @@ export function parseExcel(buffer: ArrayBuffer, filename: string): ParsedCampaig
       respuestasPct:     pct(respuestasCount),
       fallidosPorError,
       novedadesDiarias,
+      enviosPorMinuto,
+      pico,
+      duracionSegundos,
+      tasaPromedio,
     },
   }
 }
