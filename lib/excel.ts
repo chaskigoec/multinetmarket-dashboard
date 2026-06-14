@@ -72,7 +72,7 @@ function isRead(estatus: string, leido: string): boolean {
   return estatus?.toUpperCase() === 'READ' || leido?.toLowerCase() === 'si'
 }
 
-function isFailed(estatus: string): boolean {
+export function isFailed(estatus: string): boolean {
   return ['FAILED', 'UNDELIVERABLE', 'REJECTED'].includes(estatus?.toUpperCase())
 }
 
@@ -86,6 +86,7 @@ function classifyError(comentario: string, estatus: string): string {
   if (c.includes('no entregable') || c.includes('undeliverable') ||
       e.includes('undeliverable'))                                            return 'No entregable'
   if (c.includes('rejected') || c.includes('rechazado'))                     return 'Rechazado'
+  if (c.includes('opted out') || c.includes('opt-out'))                      return 'Bloqueado por usuario'
   return 'Fallo general'
 }
 

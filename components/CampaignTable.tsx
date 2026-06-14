@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { CampaignRow, normalizeStatus } from '@/lib/excel'
+import { useEffect, useState } from 'react'
+import { CampaignRow, isFailed, normalizeStatus } from '@/lib/excel'
 
 function EcuadorFlag() {
   return (
@@ -19,12 +19,10 @@ function EcuadorFlag() {
 
 function formatDestino(raw: string): string {
   const digits = raw.replace(/\D/g, '')
-  // Ecuador: 593 + 9XXXXXXXX (10 digits local starting with 09)
   if (digits.startsWith('593') && digits.length >= 12) {
-    const local = '0' + digits.slice(3)           // 0987938987
+    const local = '0' + digits.slice(3)
     return local.replace(/^(0\d{2})(\d{3})(\d{4})$/, '$1 $2 $3')
   }
-  // Already local format starting with 0
   if (digits.startsWith('0') && digits.length === 10) {
     return digits.replace(/^(0\d{2})(\d{3})(\d{4})$/, '$1 $2 $3')
   }
@@ -67,6 +65,180 @@ function traducirComentario(comentario: string): string {
   return comentario
 }
 
+type ErrorDetail = { traduccion: string; explicacion: string }
+
+function getErrorDetail(comentario: string): ErrorDetail | null {
+  if (!comentario || comentario === '-') return null
+
+  const codeMatch = comentario.match(/\[?(\d{4,6})\]?/)
+  const code = codeMatch?.[1]
+
+  const MAP: Record<string, ErrorDetail> = {
+    '130429': {
+      traduccion: 'Límite de velocidad de la API alcanzado',
+      explicacion: 'Se superó el límite de mensajes por segundo permitido por la API de WhatsApp. El sistema intentó enviar demasiados mensajes en simultáneo.',
+    },
+    '130472': {
+      traduccion: 'El número hace parte de un experimento de Meta',
+      explicacion: 'Meta bloqueó este mensaje como parte de una prueba interna. Afecta a ~1% de usuarios que no han tenido interacción reciente con cuentas de negocio.',
+    },
+    '130497': {
+      traduccion: 'Cuenta de negocio restringida por país',
+      explicacion: 'La cuenta de WhatsApp Business está bloqueada para enviar mensajes a usuarios en determinados países, generalmente por promover productos regulados.',
+    },
+    '131000': {
+      traduccion: 'Error desconocido al enviar el mensaje',
+      explicacion: 'Ocurrió un error inesperado. Espera 10 minutos e intenta nuevamente. Si el problema persiste, contacta al soporte técnico.',
+    },
+    '131005': {
+      traduccion: 'Acceso denegado — permisos insuficientes',
+      explicacion: 'Los permisos necesarios para enviar el mensaje no han sido otorgados o han sido removidos de la cuenta.',
+    },
+    '131008': {
+      traduccion: 'Falta un parámetro requerido en la solicitud',
+      explicacion: 'La solicitud enviada a WhatsApp no incluye todos los campos obligatorios. Revisar la configuración del envío.',
+    },
+    '131009': {
+      traduccion: 'Valor de parámetro no válido',
+      explicacion: 'Uno o más valores de los parámetros son inválidos, o el número de teléfono no pertenece a la cuenta de WhatsApp Business configurada.',
+    },
+    '131016': {
+      traduccion: 'Servicio de WhatsApp temporalmente no disponible',
+      explicacion: 'WhatsApp está temporalmente fuera de servicio por mantenimiento o sobrecarga de servidores. Reintenta en unos minutos.',
+    },
+    '131021': {
+      traduccion: 'El destinatario no puede ser el mismo que el remitente',
+      explicacion: 'No es posible enviar un mensaje al mismo número de teléfono que realiza el envío.',
+    },
+    '131026': {
+      traduccion: 'Mensaje no entregable',
+      explicacion: 'No se pudo entregar el mensaje. El destinatario puede no tener WhatsApp instalado, usar una versión muy antigua, o no haber aceptado los términos de servicio de WhatsApp.',
+    },
+    '131031': {
+      traduccion: 'Cuenta bloqueada por violación de políticas',
+      explicacion: 'La cuenta de WhatsApp Business fue restringida o deshabilitada por incumplir las políticas de la plataforma de Meta.',
+    },
+    '131042': {
+      traduccion: 'Problema con el método de pago de la cuenta',
+      explicacion: 'Hay un error relacionado con el pago: puede faltar una cuenta de pago, se superó el límite de crédito, o hay un problema con la configuración de moneda o zona horaria.',
+    },
+    '131047': {
+      traduccion: 'Ventana de conversación de 24 horas cerrada',
+      explicacion: 'Pasaron más de 24 horas desde la última respuesta del destinatario. Para retomar la conversación, es obligatorio usar una plantilla de mensaje aprobada por Meta.',
+    },
+    '131048': {
+      traduccion: 'Límite de mensajes no deseados alcanzado',
+      explicacion: 'La calificación de calidad del número bajó porque usuarios reportaron o bloquearon los mensajes. WhatsApp restringe temporalmente los envíos para proteger la reputación.',
+    },
+    '131049': {
+      traduccion: 'Meta decidió no entregar este mensaje',
+      explicacion: 'El destinatario recibió demasiados mensajes de marketing en un período corto. Meta limita automáticamente la entrega para mantener una experiencia de interacción saludable y proteger al usuario.',
+    },
+    '131051': {
+      traduccion: 'Tipo de mensaje no soportado',
+      explicacion: 'Se intentó enviar un formato de mensaje que la API de WhatsApp no reconoce o no soporta actualmente.',
+    },
+    '131052': {
+      traduccion: 'Error al descargar el archivo multimedia',
+      explicacion: 'No se pudo acceder al archivo multimedia enviado por el usuario. El archivo puede estar corrupto, inaccesible o hubo problemas de red.',
+    },
+    '131053': {
+      traduccion: 'Error al subir el archivo multimedia',
+      explicacion: 'No se pudo cargar el archivo multimedia del mensaje. Puede ser un formato no soportado, archivo demasiado grande o archivo corrupto.',
+    },
+    '131056': {
+      traduccion: 'Demasiados mensajes al mismo destinatario',
+      explicacion: 'Se enviaron demasiados mensajes al mismo número en un período corto. WhatsApp limita la frecuencia de contacto entre el mismo remitente y destinatario.',
+    },
+    '131057': {
+      traduccion: 'Cuenta en modo de mantenimiento',
+      explicacion: 'La cuenta de negocio está temporalmente en mantenimiento por actualizaciones del sistema. Vuelve a intentarlo en unos minutos.',
+    },
+    '132000': {
+      traduccion: 'Número de parámetros de plantilla no coincide',
+      explicacion: 'La cantidad de variables enviadas no coincide con las que requiere la plantilla. Verifica que se envíen exactamente los parámetros que la plantilla necesita.',
+    },
+    '132001': {
+      traduccion: 'La plantilla no existe o no está aprobada',
+      explicacion: 'La plantilla no existe en el idioma especificado o no ha sido aprobada por Meta. Verifica el nombre exacto y el idioma configurado.',
+    },
+    '132005': {
+      traduccion: 'Texto de plantilla demasiado largo',
+      explicacion: 'El texto final, después de reemplazar las variables con los valores reales, excede el límite de caracteres permitido por WhatsApp.',
+    },
+    '132007': {
+      traduccion: 'Contenido de plantilla viola políticas de WhatsApp',
+      explicacion: 'El contenido de la plantilla fue rechazado por Meta por no cumplir con las políticas de la plataforma de WhatsApp Business.',
+    },
+    '132012': {
+      traduccion: 'Formato de parámetro de plantilla incorrecto',
+      explicacion: 'Los valores de los parámetros no tienen el formato correcto según el tipo de dato que la plantilla espera (ej. fecha, número, texto).',
+    },
+    '132015': {
+      traduccion: 'Plantilla pausada por baja calidad',
+      explicacion: 'La plantilla fue pausada temporalmente porque recibió comentarios negativos de usuarios. Revisa el contenido y solicita su reactivación en el administrador de WhatsApp Business.',
+    },
+    '132016': {
+      traduccion: 'Plantilla deshabilitada permanentemente',
+      explicacion: 'La plantilla fue pausada demasiadas veces (3 o más) por baja calidad y ha sido deshabilitada de forma permanente por Meta.',
+    },
+    '133004': {
+      traduccion: 'Servidor temporalmente no disponible',
+      explicacion: 'El servidor de la API de WhatsApp está temporalmente inaccesible. Suele resolverse solo en pocos minutos.',
+    },
+    '133010': {
+      traduccion: 'Número de teléfono no registrado en WhatsApp Business',
+      explicacion: 'El número de teléfono no está registrado en la plataforma de WhatsApp Business. Debe completarse el proceso de registro antes de enviar mensajes.',
+    },
+    '135000': {
+      traduccion: 'Error genérico con los parámetros de la solicitud',
+      explicacion: 'Error desconocido relacionado con los parámetros enviados. Verifica que todos los datos del mensaje sean correctos y estén bien formateados.',
+    },
+  }
+
+  if (code && MAP[code]) return MAP[code]
+
+  // Fallback por palabras clave cuando no hay código explícito
+  const c = comentario.toLowerCase()
+  if (c.includes('ecosystem') || c.includes('engagement') || c.includes('healthy'))
+    return {
+      traduccion: 'Meta decidió no entregar este mensaje',
+      explicacion: 'El destinatario recibió demasiados mensajes de marketing. Meta limita la entrega automáticamente para mantener una experiencia de interacción saludable.',
+    }
+  if (c.includes('24 hour') || c.includes('24-hour') || c.includes('24 hours'))
+    return {
+      traduccion: 'Ventana de conversación de 24 horas cerrada',
+      explicacion: 'Pasaron más de 24 horas desde la última respuesta del destinatario. Es obligatorio usar una plantilla aprobada para retomar la conversación.',
+    }
+  if (c.includes('spam') || c.includes('rate limit'))
+    return {
+      traduccion: 'Límite de mensajes no deseados alcanzado',
+      explicacion: 'Los usuarios reportaron o bloquearon los mensajes. WhatsApp restringe temporalmente los envíos para proteger la reputación del número.',
+    }
+  if (c.includes('undeliverable') || c.includes('no entregable'))
+    return {
+      traduccion: 'Mensaje no entregable',
+      explicacion: 'No se pudo entregar el mensaje. El número puede no tener WhatsApp instalado, estar inactivo o usar una versión incompatible.',
+    }
+  if (c.includes('rejected') || c.includes('rechazado'))
+    return {
+      traduccion: 'Mensaje rechazado por WhatsApp',
+      explicacion: 'WhatsApp rechazó el mensaje. Puede deberse a una violación de políticas o a restricciones del número.',
+    }
+  if (c.includes('opted out') || c.includes('opt-out'))
+    return {
+      traduccion: 'Usuario bloqueó los mensajes',
+      explicacion: 'El usuario eligió no recibir más mensajes de esta cuenta de WhatsApp Business.',
+    }
+  if (c.includes('limit') || c.includes('limite'))
+    return {
+      traduccion: 'Límite de mensajes excedido',
+      explicacion: 'Se superó el límite de mensajes permitido. Espacia los envíos o reduce la frecuencia de la campaña.',
+    }
+
+  return null
+}
+
 const STATUS_STYLE: Record<string, { bg: string; color: string }> = {
   DELIVERED_CHANNEL: { bg: 'var(--channel-bg)',  color: 'var(--channel)' },
   DELIVERED_USER:    { bg: 'var(--success-bg)',  color: 'var(--success)' },
@@ -86,12 +258,212 @@ function StatusBadge({ estatus }: { estatus: string }) {
   )
 }
 
+// ─── Drawer ──────────────────────────────────────────────────────────────────
+
+function MessageDrawer({ row, onClose }: { row: CampaignRow; onClose: () => void }) {
+  const [tab, setTab] = useState<'general' | 'solicitud'>('general')
+  const failed = isFailed(row.estatus)
+  const params = row.parametros
+    ? row.parametros.split(',').map(p => p.trim()).filter(Boolean)
+    : []
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  const Field = ({
+    label, value, danger = false, justify = false,
+  }: { label: string; value: React.ReactNode; danger?: boolean; justify?: boolean }) => (
+    <div className="flex items-start justify-between gap-6 px-4 py-3"
+      style={{ borderTop: '1px solid var(--border-soft)' }}>
+      <span className="text-sm shrink-0" style={{ color: 'var(--ink-3)' }}>{label}</span>
+      {typeof value === 'string'
+        ? <span className="text-sm font-medium break-words"
+            style={{ color: danger ? 'var(--danger)' : 'var(--ink)', textAlign: justify ? 'justify' : 'right' }}>{value}</span>
+        : value}
+    </div>
+  )
+
+  return (
+    <>
+      {/* Overlay */}
+      <div
+        className="fixed inset-0 z-40"
+        style={{ background: 'rgba(15,23,42,0.35)', backdropFilter: 'blur(1px)' }}
+        onClick={onClose}
+      />
+
+      {/* Panel */}
+      <div
+        className="fixed right-0 top-0 h-full z-50 flex flex-col overflow-hidden"
+        style={{
+          width: 480,
+          background: 'var(--surface)',
+          boxShadow: '-8px 0 40px rgba(0,0,0,0.14)',
+          borderLeft: '1px solid var(--border-soft)',
+        }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 shrink-0"
+          style={{ borderBottom: '1px solid var(--border-soft)' }}>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ background: 'var(--surface-muted, #f1f5f9)' }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </div>
+            <span className="text-sm font-semibold tabular-nums" style={{ color: 'var(--ink)' }}>
+              {row.destino}
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors"
+            style={{ color: 'var(--ink-3)' }}
+            aria-label="Cerrar"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex shrink-0" style={{ borderBottom: '1px solid var(--border-soft)' }}>
+          {(['general', 'solicitud'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className="px-5 py-3 text-sm font-medium transition-colors"
+              style={{
+                color: tab === t ? 'var(--ink)' : 'var(--ink-3)',
+                borderBottom: tab === t ? '2px solid var(--ink)' : '2px solid transparent',
+                marginBottom: -1,
+              }}
+            >
+              {t === 'general' ? 'Información general' : 'Cuerpo de solicitud'}
+            </button>
+          ))}
+        </div>
+
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+
+          {tab === 'general' && (
+            <>
+              {/* Resumen */}
+              <section>
+                <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--ink)' }}>
+                  Resumen
+                </h3>
+                <div className="rounded-xl overflow-hidden"
+                  style={{ border: '1px solid var(--border-soft)' }}>
+
+                  {/* First row has no top border */}
+                  <div className="flex items-start justify-between gap-6 px-4 py-3">
+                    <span className="text-sm shrink-0" style={{ color: 'var(--ink-3)' }}>Destino</span>
+                    <span className="text-sm font-medium tabular-nums" style={{ color: 'var(--ink)' }}>
+                      {row.destino}
+                    </span>
+                  </div>
+
+                  <Field label="Origen" value={row.origen || 'Campaña'} />
+                  <Field label="Plantilla" value={row.plantilla || '—'} />
+                  <Field label="Estatus" value={<StatusBadge estatus={row.estatus} />} />
+                  <Field label="Fecha de envío" value={formatFecha(row.fechaEnvio)} />
+
+                  {failed && row.comentario && (() => {
+                    const detail = getErrorDetail(row.comentario)
+                    const codeMatch = row.comentario.match(/\[?(\d{4,6})\]?/)
+                    const code = codeMatch?.[1]
+                    const label = detail
+                      ? `${code ? `[${code}] ` : ''}${detail.traduccion}`
+                      : row.comentario
+                    return (
+                      <>
+                        <Field label="Error" value={label} danger />
+                        {detail?.explicacion && (
+                          <Field label="¿Por qué ocurrió?" value={detail.explicacion} justify />
+                        )}
+                      </>
+                    )
+                  })()}
+
+                  <Field
+                    label="Confirmación de lectura"
+                    value={row.leido && row.leido.toLowerCase() !== 'no' && row.leido !== '' ? row.leido : 'No'}
+                  />
+                </div>
+              </section>
+
+              {/* Parámetros */}
+              {params.length > 0 && (
+                <section>
+                  <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"
+                    style={{ color: 'var(--ink)' }}>
+                    Parámetros
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-semibold"
+                      style={{ background: 'var(--ink)', color: '#fff' }}>
+                      {params.length}
+                    </span>
+                  </h3>
+                  <div className="rounded-xl px-4 py-3 space-y-1.5"
+                    style={{ border: '1px solid var(--border-soft)' }}>
+                    {params.map((p, i) => (
+                      <p key={i} className="text-sm" style={{ color: 'var(--ink-2)' }}>
+                        • {p}
+                      </p>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </>
+          )}
+
+          {tab === 'solicitud' && (
+            <section>
+              <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--ink)' }}>
+                Entrega y respuesta
+              </h3>
+              <div className="rounded-xl overflow-hidden"
+                style={{ border: '1px solid var(--border-soft)' }}>
+
+                <div className="flex items-start justify-between gap-6 px-4 py-3">
+                  <span className="text-sm shrink-0" style={{ color: 'var(--ink-3)' }}>Entrega al canal</span>
+                  <span className="text-sm font-medium" style={{ color: 'var(--ink)' }}>
+                    {formatFecha(row.fechaEntregaCanal)}
+                  </span>
+                </div>
+
+                <Field label="Entrega al usuario" value={formatFecha(row.fechaEntregaUsuario)} />
+                <Field label="Fecha de lectura"   value={formatFecha(row.fechaLectura)} />
+                <Field label="Respuesta"           value={formatRespuesta(row.respuesta)} />
+                <Field label="Fecha respuesta"     value={row.fechaRespuesta ? formatFecha(row.fechaRespuesta) : '—'} />
+              </div>
+            </section>
+          )}
+
+        </div>
+      </div>
+    </>
+  )
+}
+
+// ─── Table ────────────────────────────────────────────────────────────────────
+
 const PAGE_SIZES = [10, 20, 50, 100]
 
 export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
+  const [search, setSearch]       = useState('')
+  const [page, setPage]           = useState(1)
+  const [pageSize, setPageSize]   = useState(20)
+  const [selected, setSelected]   = useState<CampaignRow | null>(null)
 
   const q = search.toLowerCase()
   const filtered = !q ? rows : rows.filter(r =>
@@ -125,113 +497,124 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
   const HEADERS = ['Destino', 'Nombre', 'Estatus', 'Fecha de envío', 'Leído', 'Respuesta', 'Fecha respuesta', 'Plantilla']
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border-soft)", background: "var(--surface)" }}>
+    <>
+      <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border-soft)", background: "var(--surface)" }}>
 
-      {/* Toolbar */}
-      <div className="flex items-center justify-between px-5 py-3.5 gap-4"
-        style={{ borderBottom: "1px solid var(--border-soft)", background: "#f9fafb" }}>
-        <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--ink-3)" }}>
-          Detalle de mensajes
-        </p>
-        <div className="flex items-center gap-3">
-          <select
-            value={pageSize}
-            onChange={e => { setPageSize(Number(e.target.value)); setPage(1) }}
-            className="text-xs outline-none rounded-lg px-2 py-1.5 cursor-pointer"
-            style={{ border: "1px solid var(--border-soft)", background: "var(--surface)", color: "var(--ink-2)" }}
-          >
-            {PAGE_SIZES.map(s => (
-              <option key={s} value={s}>{s} por página</option>
-            ))}
-          </select>
-          <input
-            type="text"
-            placeholder="Buscar número, estado..."
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1) }}
-            className="text-sm outline-none rounded-lg px-3 py-1.5 w-56"
-            style={{ border: "1px solid var(--border-soft)", background: "var(--surface)", color: "var(--ink)" }}
-          />
-          <button onClick={exportCSV}
-            className="text-xs font-medium px-3 py-1.5 rounded-lg"
-            style={{ border: "1px solid var(--border-soft)", background: "var(--surface)", color: "var(--ink-2)" }}>
-            Exportar CSV
-          </button>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr style={{ borderBottom: "1px solid var(--border-soft)", background: "#f9fafb" }}>
-              {HEADERS.map(h => (
-                <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider whitespace-nowrap"
-                  style={{ color: "var(--ink-3)" }}>
-                  {h}
-                </th>
+        {/* Toolbar */}
+        <div className="flex items-center justify-between px-5 py-3.5 gap-4"
+          style={{ borderBottom: "1px solid var(--border-soft)", background: "#f9fafb" }}>
+          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--ink-3)" }}>
+            Detalle de mensajes
+          </p>
+          <div className="flex items-center gap-3">
+            <select
+              value={pageSize}
+              onChange={e => { setPageSize(Number(e.target.value)); setPage(1) }}
+              className="text-xs outline-none rounded-lg px-2 py-1.5 cursor-pointer"
+              style={{ border: "1px solid var(--border-soft)", background: "var(--surface)", color: "var(--ink-2)" }}
+            >
+              {PAGE_SIZES.map(s => (
+                <option key={s} value={s}>{s} por página</option>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {slice.map((r, i) => (
-              <tr key={r.id} className="row-hover transition-colors"
-                style={{ borderTop: i > 0 ? "1px solid var(--border-soft)" : undefined }}>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-1.5">
-                    <EcuadorFlag />
-                    <span className="font-mono text-xs tabular" style={{ color: "var(--ink-2)" }}>
-                      {formatDestino(r.destino)}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-sm" style={{ color: "var(--ink)" }}>{r.parametros || '—'}</td>
-                <td className="px-4 py-3"><StatusBadge estatus={r.estatus} /></td>
-                <td className="px-4 py-3 text-xs tabular whitespace-nowrap" style={{ color: "var(--ink-3)" }}>{formatFecha(r.fechaEnvio)}</td>
-                <td className="px-4 py-3 text-xs" style={{ color: "var(--ink-3)" }}>{r.leido || '—'}</td>
-                <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: "var(--ink-3)" }}
-                  title={r.respuesta || undefined}>{formatRespuesta(r.respuesta)}</td>
-                <td className="px-4 py-3 text-xs whitespace-nowrap tabular" style={{ color: "var(--ink-3)" }}>
-                  {r.fechaRespuesta ? formatRespuesta(r.fechaRespuesta) : '—'}
-                </td>
-                <td className="px-4 py-3 text-xs font-mono" style={{ color: "var(--ink-3)" }}>{r.plantilla}</td>
-              </tr>
-            ))}
-            {!slice.length && (
-              <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-sm" style={{ color: "var(--ink-3)" }}>
-                  Sin resultados para &quot;{search}&quot;
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            </select>
+            <input
+              type="text"
+              placeholder="Buscar número, estado..."
+              value={search}
+              onChange={e => { setSearch(e.target.value); setPage(1) }}
+              className="text-sm outline-none rounded-lg px-3 py-1.5 w-56"
+              style={{ border: "1px solid var(--border-soft)", background: "var(--surface)", color: "var(--ink)" }}
+            />
+            <button onClick={exportCSV}
+              className="text-xs font-medium px-3 py-1.5 rounded-lg"
+              style={{ border: "1px solid var(--border-soft)", background: "var(--surface)", color: "var(--ink-2)" }}>
+              Exportar CSV
+            </button>
+          </div>
+        </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between px-5 py-3 text-xs"
-        style={{ borderTop: "1px solid var(--border-soft)", color: "var(--ink-3)" }}>
-        <span>
-          {filtered.length === 0 ? '0 registros' : (
-            <>
-              {((cur - 1) * pageSize + 1).toLocaleString('es-EC')}–{Math.min(cur * pageSize, filtered.length).toLocaleString('es-EC')} de {filtered.length.toLocaleString('es-EC')}
-            </>
-          )}
-        </span>
-        <div className="flex items-center gap-1">
-          <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={cur === 1}
-            className="px-2.5 py-1 rounded font-medium disabled:opacity-30"
-            style={{ border: "1px solid var(--border-soft)" }}>
-            Anterior
-          </button>
-          <span className="px-3">{cur} / {totalPages}</span>
-          <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={cur === totalPages}
-            className="px-2.5 py-1 rounded font-medium disabled:opacity-30"
-            style={{ border: "1px solid var(--border-soft)" }}>
-            Siguiente
-          </button>
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ borderBottom: "1px solid var(--border-soft)", background: "#f9fafb" }}>
+                {HEADERS.map(h => (
+                  <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider whitespace-nowrap"
+                    style={{ color: "var(--ink-3)" }}>
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {slice.map((r, i) => (
+                <tr
+                  key={r.id}
+                  className="row-hover transition-colors cursor-pointer"
+                  style={{ borderTop: i > 0 ? "1px solid var(--border-soft)" : undefined }}
+                  onClick={() => setSelected(r)}
+                >
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1.5">
+                      <EcuadorFlag />
+                      <span className="font-mono text-xs tabular" style={{ color: "var(--ink-2)" }}>
+                        {formatDestino(r.destino)}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-sm" style={{ color: "var(--ink)" }}>{r.parametros || '—'}</td>
+                  <td className="px-4 py-3"><StatusBadge estatus={r.estatus} /></td>
+                  <td className="px-4 py-3 text-xs tabular whitespace-nowrap" style={{ color: "var(--ink-3)" }}>{formatFecha(r.fechaEnvio)}</td>
+                  <td className="px-4 py-3 text-xs" style={{ color: "var(--ink-3)" }}>{r.leido || '—'}</td>
+                  <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: "var(--ink-3)" }}
+                    title={r.respuesta || undefined}>{formatRespuesta(r.respuesta)}</td>
+                  <td className="px-4 py-3 text-xs whitespace-nowrap tabular" style={{ color: "var(--ink-3)" }}>
+                    {r.fechaRespuesta ? formatRespuesta(r.fechaRespuesta) : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-xs font-mono" style={{ color: "var(--ink-3)" }}>{r.plantilla}</td>
+                </tr>
+              ))}
+              {!slice.length && (
+                <tr>
+                  <td colSpan={8} className="px-4 py-12 text-center text-sm" style={{ color: "var(--ink-3)" }}>
+                    Sin resultados para &quot;{search}&quot;
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        <div className="flex items-center justify-between px-5 py-3 text-xs"
+          style={{ borderTop: "1px solid var(--border-soft)", color: "var(--ink-3)" }}>
+          <span>
+            {filtered.length === 0 ? '0 registros' : (
+              <>
+                {((cur - 1) * pageSize + 1).toLocaleString('es-EC')}–{Math.min(cur * pageSize, filtered.length).toLocaleString('es-EC')} de {filtered.length.toLocaleString('es-EC')}
+              </>
+            )}
+          </span>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={cur === 1}
+              className="px-2.5 py-1 rounded font-medium disabled:opacity-30"
+              style={{ border: "1px solid var(--border-soft)" }}>
+              Anterior
+            </button>
+            <span className="px-3">{cur} / {totalPages}</span>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={cur === totalPages}
+              className="px-2.5 py-1 rounded font-medium disabled:opacity-30"
+              style={{ border: "1px solid var(--border-soft)" }}>
+              Siguiente
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Drawer — mounted outside the table so it overlays the full viewport */}
+      {selected && (
+        <MessageDrawer row={selected} onClose={() => setSelected(null)} />
+      )}
+    </>
   )
 }
