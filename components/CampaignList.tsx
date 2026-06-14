@@ -19,14 +19,6 @@ function getOrg(c: ParsedCampaign): string {
   return 'Otro'
 }
 
-function formatDuracion(seg: number): string {
-  if (seg <= 0) return '< 1s'
-  const h = Math.floor(seg / 3600)
-  const m = Math.floor((seg % 3600) / 60)
-  const s = seg % 60
-  return [h ? `${h}h` : '', m ? `${m}m` : '', s ? `${s}s` : ''].filter(Boolean).join(' ')
-}
-
 function formatFecha(raw: string): string {
   const dt = new Date(raw.replace(' ', 'T'))
   if (isNaN(dt.getTime())) return raw
@@ -213,8 +205,6 @@ export function CampaignList({ campaigns }: CampaignListProps) {
               <th className={`${thCls} text-right`} style={{ color: "var(--ink-3)" }} onClick={() => toggleSort('total')}>
                 Total <SortIcon active={sortField === 'total'} dir={sortDir} />
               </th>
-              <th className={`${thCls} text-right`} style={{ color: "var(--ink-3)" }}>Duración</th>
-              <th className={`${thCls} text-right`} style={{ color: "var(--ink-3)" }}>Tasa</th>
               <th className={thCls} style={{ color: "var(--ink-3)" }}>Estado</th>
               <th className="w-8" />
             </tr>
@@ -244,12 +234,6 @@ export function CampaignList({ campaigns }: CampaignListProps) {
                   </td>
                   <td className="px-5 py-4 text-sm font-semibold tabular text-right" style={{ color: "var(--ink)" }}>
                     {c.metrics.total.toLocaleString('es-EC')}
-                  </td>
-                  <td className="px-5 py-4 text-sm tabular text-right" style={{ color: "var(--ink-2)" }}>
-                    {formatDuracion(c.metrics.duracionSegundos)}
-                  </td>
-                  <td className="px-5 py-4 text-sm tabular text-right" style={{ color: "var(--ink-2)" }}>
-                    {c.metrics.tasaPromedio > 0 ? `${c.metrics.tasaPromedio} msg/min` : '—'}
                   </td>
                   <td className="px-5 py-4">
                     <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"

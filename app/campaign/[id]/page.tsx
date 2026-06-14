@@ -7,7 +7,6 @@ import { DonutChart } from "@/components/charts/DonutChart";
 import { PerformanceChart } from "@/components/charts/PerformanceChart";
 import { FailuresByErrorChart } from "@/components/charts/FailuresByErrorChart";
 import { DailyChart } from "@/components/charts/DailyChart";
-import { RateChart } from "@/components/charts/RateChart";
 import { CampaignTable } from "@/components/CampaignTable";
 
 export const dynamic = "force-dynamic";
@@ -81,16 +80,6 @@ export default async function CampaignPage({ params }: Props) {
         <PerformanceChart total={metrics.total} enviadosCanal={metrics.enviadosCanal} entregados={metrics.entregados} leidos={metrics.leidos} respuestas={metrics.respuestas} />
         <FailuresByErrorChart data={metrics.fallidosPorError} />
         <DailyChart data={metrics.novedadesDiarias} />
-        {metrics.enviosPorMinuto.length > 0 && (
-          <div className="lg:col-span-2">
-            <RateChart
-              data={metrics.enviosPorMinuto}
-              pico={metrics.pico}
-              duracionSegundos={metrics.duracionSegundos}
-              tasaPromedio={metrics.tasaPromedio}
-            />
-          </div>
-        )}
       </div>
 
       {/* Table */}
