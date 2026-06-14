@@ -11,6 +11,7 @@ export interface CampaignRow {
   fechaEntregaUsuario: string
   fechaLectura: string
   respuesta: string
+  fechaRespuesta: string
   plantilla: string
   comentario: string
   origen: string
@@ -112,6 +113,7 @@ export function parseExcel(buffer: ArrayBuffer, filename: string): ParsedCampaig
     fechaEntregaUsuario: str(r['Fecha de entrega al usuario']),
     fechaLectura:        str(r['Fecha de lectura por usuario']),
     respuesta:           str(r['Respuesta']),
+    fechaRespuesta:      str(r['Fecha Respuesta']),
     plantilla:           str(r['Plantilla']                   ?? r['plantilla']),
     comentario:          str(r['Comentario']),
     origen:              str(r['Origen']),

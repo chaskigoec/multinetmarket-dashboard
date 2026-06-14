@@ -103,10 +103,10 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
   const slice = filtered.slice((cur - 1) * pageSize, cur * pageSize)
 
   const exportCSV = () => {
-    const h = ['Destino', 'Nombre', 'Estatus', 'Fecha de envío', 'Leído', 'Respondido', 'Plantilla']
+    const h = ['Destino', 'Nombre', 'Estatus', 'Fecha de envío', 'Leído', 'Respondido', 'Fecha respuesta', 'Plantilla']
     const lines = [
       h.join(','),
-      ...filtered.map(r => [r.destino, r.parametros, normalizeStatus(r.estatus), r.fechaEnvio, r.leido, formatRespuesta(r.respuesta), r.plantilla]
+      ...filtered.map(r => [r.destino, r.parametros, normalizeStatus(r.estatus), r.fechaEnvio, r.leido, formatRespuesta(r.respuesta), r.fechaRespuesta ? formatRespuesta(r.fechaRespuesta) : '', r.plantilla]
         .map(v => `"${v}"`).join(','))
     ]
     const a = document.createElement('a')
@@ -115,7 +115,7 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
     a.click()
   }
 
-  const HEADERS = ['Destino', 'Nombre', 'Estatus', 'Fecha de envío', 'Leído', 'Respuesta', 'Plantilla']
+  const HEADERS = ['Destino', 'Nombre', 'Estatus', 'Fecha de envío', 'Leído', 'Respuesta', 'Fecha respuesta', 'Plantilla']
 
   return (
     <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border-soft)", background: "var(--surface)" }}>
@@ -184,12 +184,15 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
                 <td className="px-4 py-3 text-xs" style={{ color: "var(--ink-3)" }}>{r.leido || '—'}</td>
                 <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: "var(--ink-3)" }}
                   title={r.respuesta || undefined}>{formatRespuesta(r.respuesta)}</td>
+                <td className="px-4 py-3 text-xs whitespace-nowrap tabular" style={{ color: "var(--ink-3)" }}>
+                  {r.fechaRespuesta ? formatRespuesta(r.fechaRespuesta) : '—'}
+                </td>
                 <td className="px-4 py-3 text-xs font-mono" style={{ color: "var(--ink-3)" }}>{r.plantilla}</td>
               </tr>
             ))}
             {!slice.length && (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-sm" style={{ color: "var(--ink-3)" }}>
+                <td colSpan={8} className="px-4 py-12 text-center text-sm" style={{ color: "var(--ink-3)" }}>
                   Sin resultados para &quot;{search}&quot;
                 </td>
               </tr>
