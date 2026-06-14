@@ -31,6 +31,19 @@ function formatDestino(raw: string): string {
   return raw
 }
 
+function formatRespuesta(raw: string): string {
+  if (!raw || raw === '-') return '—'
+  // Detect "YYYY-MM-DD HH:MM:SS" or ISO strings
+  const dt = new Date(raw.replace(' ', 'T'))
+  if (!isNaN(dt.getTime()) && /^\d{4}-\d{2}-\d{2}/.test(raw.trim())) {
+    return dt.toLocaleString('es-EC', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', hour12: false,
+    })
+  }
+  return raw
+}
+
 function traducirComentario(comentario: string): string {
   if (!comentario || comentario === '-') return '—'
   const c = comentario.toLowerCase()
@@ -93,7 +106,7 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
     const h = ['Destino', 'Nombre', 'Estatus', 'Fecha de envío', 'Leído', 'Respondido', 'Plantilla']
     const lines = [
       h.join(','),
-      ...filtered.map(r => [r.destino, r.parametros, normalizeStatus(r.estatus), r.fechaEnvio, r.leido, r.respuesta || '-', r.plantilla]
+      ...filtered.map(r => [r.destino, r.parametros, normalizeStatus(r.estatus), r.fechaEnvio, r.leido, formatRespuesta(r.respuesta), r.plantilla]
         .map(v => `"${v}"`).join(','))
     ]
     const a = document.createElement('a')
@@ -169,8 +182,8 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
                 <td className="px-4 py-3"><StatusBadge estatus={r.estatus} /></td>
                 <td className="px-4 py-3 text-xs tabular whitespace-nowrap" style={{ color: "var(--ink-3)" }}>{r.fechaEnvio}</td>
                 <td className="px-4 py-3 text-xs" style={{ color: "var(--ink-3)" }}>{r.leido || '—'}</td>
-                <td className="px-4 py-3 text-xs max-w-[180px] truncate" style={{ color: "var(--ink-3)" }}
-                  title={r.respuesta || undefined}>{r.respuesta || '—'}</td>
+                <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: "var(--ink-3)" }}
+                  title={r.respuesta || undefined}>{formatRespuesta(r.respuesta)}</td>
                 <td className="px-4 py-3 text-xs font-mono" style={{ color: "var(--ink-3)" }}>{r.plantilla}</td>
               </tr>
             ))}
