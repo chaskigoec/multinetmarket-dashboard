@@ -150,3 +150,48 @@
 [2026-06-14 14:01:26] Sincronizando: etapa_13062026200241.xlsx
 [2026-06-14 14:01:26]   Cargada OK: etapa_13062026200241 (id: ZXRhcGFfMTMwNjIwMjYyMDAyNDEueGxzeA)
 [2026-06-14 14:01:26] Sincronizacion completada. Dashboard: https://multinetmarket-dashboard.vercel.app
+[2026-06-14 14:06:47] === Sincronizacion MultinetMarket → https://multinetmarket-dashboard.vercel.app ===
+[2026-06-14 14:06:47] Encontrados 5 archivo(s) Excel.
+[2026-06-14 14:06:47] Sincronizando: etapa_29052026161016.xlsx
+[2026-06-14 14:06:48]   Ya existia: etapa_29052026161016
+[2026-06-14 14:06:48] Sincronizando: Campaña 1 Etapa_28052026 (1).xlsx
+[2026-06-14 14:06:48]   Ya existia: etapa_280520261539
+[2026-06-14 14:06:48] Sincronizando: Campaña 2 Etapa_28052026 (1).xlsx
+[2026-06-14 14:06:49]   Ya existia: etapa_28052026153902
+[2026-06-14 14:06:49] Sincronizando: prueba03130620261138.xlsx
+[2026-06-14 14:06:49]   Ya existia: prueba03130620261138
+[2026-06-14 14:06:49] Sincronizando: etapa_13062026200241.xlsx
+[2026-06-14 14:06:50]   Cargada OK: etapa_13062026200241 (id: ZXRhcGFfMTMwNjIwMjYyMDAyNDEueGxzeA)
+[2026-06-14 14:06:50] Sincronizacion completada. Dashboard: https://multinetmarket-dashboard.vercel.app
+[2026-06-14 14:33:23] === Sincronizacion MultinetMarket → https://multinetmarket-dashboard.vercel.app ===
+[2026-06-14 14:33:23] Encontrados 5 archivo(s) Excel.
+[2026-06-14 14:33:23] Sincronizando: etapa_29052026161016.xlsx
+[2026-06-14 14:33:25]   Ya existia: etapa_29052026161016
+[2026-06-14 14:33:25] Sincronizando: Campaña 1 Etapa_28052026 (1).xlsx
+[2026-06-14 14:33:25]   Ya existia: etapa_280520261539
+[2026-06-14 14:33:25] Sincronizando: Campaña 2 Etapa_28052026 (1).xlsx
+[2026-06-14 14:33:25]   Ya existia: etapa_28052026153902
+[2026-06-14 14:33:25] Sincronizando: prueba03130620261138.xlsx
+[2026-06-14 14:33:26]   Ya existia: prueba03130620261138
+[2026-06-14 14:33:26] Sincronizando: etapa_13062026200241.xlsx
+[2026-06-14 14:33:26]   Cargada OK: etapa_13062026200241 (id: ZXRhcGFfMTMwNjIwMjYyMDAyNDEueGxzeA)
+[2026-06-14 14:33:26] Sincronizacion completada. Dashboard: https://multinetmarket-dashboard.vercel.app
+[2026-06-14 14:46:32] === Merge y Sync MultinetMarket → https://multinetmarket-dashboard.vercel.app ===
+[2026-06-14 14:46:32] Base (xlsx):      da9c02f5-614b-4988-8014-98a696dbe285.xlsx
+[2026-06-14 14:46:32] Respuestas (csv): nuevos_planes-export-2026-06-14-18-51-10.csv
+[2026-06-14 14:46:32] Ejecutando merge...
+[2026-06-14 14:46:32] Merge OK: etapa_13062026200241
+[2026-06-14 14:46:32]   Filas totales:     6
+[2026-06-14 14:46:32]   Con respuesta:     3
+[2026-06-14 14:46:32]   Respuestas en CSV: 3
+[2026-06-14 14:46:32]   Archivo generado:  C:\Users\PaoloJácome\OneDrive - ChaskiGo\Documentos - OPERACIONES CHASKI\PROYECTOS\2026\MULTINETMARKET\ETAPA\Resultados\etapa_13062026200241.xlsx
+[2026-06-14 14:46:32] Verificando versión anterior en Redis...
+[2026-06-14 14:46:34]   Versión anterior eliminada de Redis: etapa_13062026200241.xlsx
+[2026-06-14 14:46:35] Subiendo a Vercel: etapa_13062026200241.xlsx
+[2026-06-14 14:46:36]   Subida OK: etapa_13062026200241 (id: ZXRhcGFfMTMwNjIwMjYyMDAyNDEueGxzeA)
+[2026-06-14 14:46:36] === Completado. Dashboard: https://multinetmarket-dashboard.vercel.app ===
+[2026-06-14 14:46:36] 
+[2026-06-14 14:46:36] Próximos pasos cuando haya nuevas respuestas:
+[2026-06-14 14:46:36]   1. Descarga el CSV actualizado de Datum y reemplázalo en: C:\Users\PaoloJácome\OneDrive - ChaskiGo\Documentos - OPERACIONES CHASKI\PROYECTOS\2026\MULTINETMARKET\ETAPA\Procesar
+[2026-06-14 14:46:36]   2. Si el reporte base cambió, reemplaza el .xlsx también.
+[2026-06-14 14:46:36]   3. Vuelve a ejecutar: .\merge-y-sync.ps1

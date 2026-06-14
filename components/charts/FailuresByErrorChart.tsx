@@ -4,6 +4,26 @@ import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recha
 
 const ERROR_COLORS = ['#7c3aed', '#1d4ed8', '#ea580c', '#15803d', '#94a3b8']
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function renderLabel({ cx, cy, midAngle, outerRadius, name, percent }: any) {
+  if ((percent ?? 0) < 0.05) return null
+  const RADIAN = Math.PI / 180
+  const radius = (outerRadius ?? 75) + 24
+  const x = (cx ?? 0) + radius * Math.cos(-(midAngle ?? 0) * RADIAN)
+  const y = (cy ?? 0) + radius * Math.sin(-(midAngle ?? 0) * RADIAN)
+  return (
+    <text
+      x={x}
+      y={y}
+      textAnchor={x > (cx ?? 0) ? 'start' : 'end'}
+      dominantBaseline="central"
+      style={{ fontSize: 11, fill: '#64748b', fontWeight: 500 }}
+    >
+      {`${name} · ${((percent ?? 0) * 100).toFixed(0)}%`}
+    </text>
+  )
+}
+
 export function FailuresByErrorChart({ data }: { data: { tipo: string; cantidad: number }[] }) {
   if (!data.length) {
     return (
@@ -22,7 +42,7 @@ export function FailuresByErrorChart({ data }: { data: { tipo: string; cantidad:
       <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "var(--ink-3)" }}>
         Fallidos por error
       </p>
-      <ResponsiveContainer width="100%" height={220}>
+      <ResponsiveContainer width="100%" height={260}>
         <PieChart>
           <Pie
             data={data}
@@ -30,18 +50,17 @@ export function FailuresByErrorChart({ data }: { data: { tipo: string; cantidad:
             nameKey="tipo"
             cx="50%"
             cy="50%"
-            outerRadius={80}
+            outerRadius={75}
             paddingAngle={3}
-            label={({ percent }) => `${((percent ?? 0) * 100).toFixed(0)}%`}
-            labelLine={false}
+            label={renderLabel}
+            labelLine={{ stroke: '#cbd5e1', strokeWidth: 1 }}
           >
             {data.map((_, i) => <Cell key={i} fill={ERROR_COLORS[i % ERROR_COLORS.length]} />)}
           </Pie>
           <Tooltip
             contentStyle={{ borderRadius: 8, border: "1px solid var(--border-soft)", fontSize: 12 }}
-            formatter={(v) => [(v as number).toLocaleString('es-EC'), 'mensajes']}
+            formatter={(v, name) => [(v as number).toLocaleString('es-EC') + ' mensajes', name]}
           />
-          <Legend iconSize={8} wrapperStyle={{ fontSize: 11 }} />
         </PieChart>
       </ResponsiveContainer>
     </div>
