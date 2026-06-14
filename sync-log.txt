@@ -18,3 +18,70 @@
 [2026-05-31 21:29:07] Sincronizando: Campa�a 2 Etapa_28052026 (1).xlsx
 [2026-05-31 21:29:07]   Cargada OK: etapa_28052026153902 (id: 28e4eff0-4883-426a-9b14-4683ffff93c4)
 [2026-05-31 21:29:07] Sincronizacion completada. Dashboard: http://localhost:3000
+[2026-05-31 23:50:39] === Sincronizacion MultinetMarket → https://multinetmarket-dashboard.vercel.app ===
+[2026-05-31 23:50:39] Encontrados 3 archivo(s) Excel.
+[2026-05-31 23:50:39] Sincronizando: etapa_29052026161016.xlsx
+[2026-05-31 23:50:40]   Cargada OK: etapa_29052026161016 (id: 185d9537-cebd-44cf-b6fc-d5271a3b66af)
+[2026-05-31 23:50:40] Sincronizando: Campaña 1 Etapa_28052026 (1).xlsx
+[2026-05-31 23:50:40]   Cargada OK: etapa_280520261539 (id: 2fd6ef8b-c130-442d-ac50-a13217495ed8)
+[2026-05-31 23:50:40] Sincronizando: Campaña 2 Etapa_28052026 (1).xlsx
+[2026-05-31 23:50:41]   Cargada OK: etapa_28052026153902 (id: e7b9cc44-a769-4ce2-9ee5-74a64d61d57b)
+[2026-05-31 23:50:41] Sincronizacion completada. Dashboard: https://multinetmarket-dashboard.vercel.app
+[2026-05-31 23:56:02] === Sincronizacion MultinetMarket → https://multinetmarket-dashboard.vercel.app ===
+[2026-05-31 23:56:02] Encontrados 3 archivo(s) Excel.
+[2026-05-31 23:56:02] Sincronizando: etapa_29052026161016.xlsx
+[2026-05-31 23:56:03]   Cargada OK: etapa_29052026161016 (id: ZXRhcGFfMjkwNTIwMjYxNjEwMTYueGxzeA)
+[2026-05-31 23:56:03] Sincronizando: Campaña 1 Etapa_28052026 (1).xlsx
+[2026-05-31 23:56:04]   Cargada OK: etapa_280520261539 (id: Q2FtcGHDsWEgMSBFdGFwYV8yODA1MjAyNiAoMSkueGxzeA)
+[2026-05-31 23:56:04] Sincronizando: Campaña 2 Etapa_28052026 (1).xlsx
+[2026-05-31 23:56:04]   Ya existia: etapa_28052026153902
+[2026-05-31 23:56:04] Sincronizacion completada. Dashboard: https://multinetmarket-dashboard.vercel.app
+[2026-06-13 20:24:29] === Sincronizacion MultinetMarket → https://multinetmarket-dashboard.vercel.app ===
+[2026-06-13 20:24:29] Encontrados 4 archivo(s) Excel.
+[2026-06-13 20:24:29] Sincronizando: etapa_29052026161016.xlsx
+[2026-06-13 20:24:31]   Ya existia: etapa_29052026161016
+[2026-06-13 20:24:31] Sincronizando: Campaña 1 Etapa_28052026 (1).xlsx
+[2026-06-13 20:24:31]   Ya existia: etapa_280520261539
+[2026-06-13 20:24:31] Sincronizando: Campaña 2 Etapa_28052026 (1).xlsx
+[2026-06-13 20:24:32]   Ya existia: etapa_28052026153902
+[2026-06-13 20:24:32] Sincronizando: prueba03130620261138.xlsx
+[2026-06-13 20:24:32]   ERROR en prueba03130620261138.xlsx: 
+{
+  "error": "Error al procesar el archivo"
+}
+[2026-06-13 20:24:32] Sincronizacion completada. Dashboard: https://multinetmarket-dashboard.vercel.app
+[2026-06-13 21:15:33] === Sincronizacion MultinetMarket → https://multinetmarket-dashboard.vercel.app ===
+[2026-06-13 21:15:33] Encontrados 4 archivo(s) Excel.
+[2026-06-13 21:15:33] Sincronizando: etapa_29052026161016.xlsx
+[2026-06-13 21:15:34]   Ya existia: etapa_29052026161016
+[2026-06-13 21:15:34] Sincronizando: Campaña 1 Etapa_28052026 (1).xlsx
+[2026-06-13 21:15:35]   Ya existia: etapa_280520261539
+[2026-06-13 21:15:35] Sincronizando: Campaña 2 Etapa_28052026 (1).xlsx
+[2026-06-13 21:15:35]   Ya existia: etapa_28052026153902
+[2026-06-13 21:15:35] Sincronizando: prueba03130620261138.xlsx
+[2026-06-13 21:15:36]   Cargada OK: prueba03130620261138 (id: cHJ1ZWJhMDMxMzA2MjAyNjExMzgueGxzeA)
+[2026-06-13 21:15:36] Sincronizacion completada. Dashboard: https://multinetmarket-dashboard.vercel.app
+[2026-06-14 09:05:29] === Sincronizacion MultinetMarket → https://multinetmarket-dashboard.vercel.app ===
+[2026-06-14 09:05:29] Encontrados 4 archivo(s) Excel.
+[2026-06-14 09:05:29] Sincronizando: etapa_29052026161016.xlsx
+[2026-06-14 09:05:31]   Ya existia: etapa_29052026161016
+[2026-06-14 09:05:31] Sincronizando: Campaña 1 Etapa_28052026 (1).xlsx
+[2026-06-14 09:05:31]   Ya existia: etapa_280520261539
+[2026-06-14 09:05:31] Sincronizando: Campaña 2 Etapa_28052026 (1).xlsx
+[2026-06-14 09:05:32]   Ya existia: etapa_28052026153902
+[2026-06-14 09:05:32] Sincronizando: prueba03130620261138.xlsx
+[2026-06-14 09:05:32]   Cargada OK: prueba03130620261138 (id: cHJ1ZWJhMDMxMzA2MjAyNjExMzgueGxzeA)
+[2026-06-14 09:05:32] Sincronizacion completada. Dashboard: https://multinetmarket-dashboard.vercel.app
+[2026-06-14 10:07:56] === Sincronizacion MultinetMarket → https://multinetmarket-dashboard.vercel.app ===
+[2026-06-14 10:07:56] Encontrados 5 archivo(s) Excel.
+[2026-06-14 10:07:56] Sincronizando: etapa_29052026161016.xlsx
+[2026-06-14 10:07:57]   Ya existia: etapa_29052026161016
+[2026-06-14 10:07:57] Sincronizando: Campaña 1 Etapa_28052026 (1).xlsx
+[2026-06-14 10:07:58]   Ya existia: etapa_280520261539
+[2026-06-14 10:07:58] Sincronizando: Campaña 2 Etapa_28052026 (1).xlsx
+[2026-06-14 10:07:59]   Ya existia: etapa_28052026153902
+[2026-06-14 10:07:59] Sincronizando: prueba03130620261138.xlsx
+[2026-06-14 10:07:59]   Ya existia: prueba03130620261138
+[2026-06-14 10:07:59] Sincronizando: etapa_13062026200241.xlsx
+[2026-06-14 10:08:00]   Cargada OK: etapa_13062026200241 (id: ZXRhcGFfMTMwNjIwMjYyMDAyNDEueGxzeA)
+[2026-06-14 10:08:00] Sincronizacion completada. Dashboard: https://multinetmarket-dashboard.vercel.app
