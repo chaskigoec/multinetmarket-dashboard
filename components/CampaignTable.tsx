@@ -31,17 +31,24 @@ function formatDestino(raw: string): string {
   return raw
 }
 
-function formatRespuesta(raw: string): string {
+const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
+
+function formatFecha(raw: string): string {
   if (!raw || raw === '-') return '—'
-  // Detect "YYYY-MM-DD HH:MM:SS" or ISO strings
   const dt = new Date(raw.replace(' ', 'T'))
   if (!isNaN(dt.getTime()) && /^\d{4}-\d{2}-\d{2}/.test(raw.trim())) {
-    return dt.toLocaleString('es-EC', {
-      day: '2-digit', month: 'short', year: 'numeric',
-      hour: '2-digit', minute: '2-digit', hour12: false,
-    })
+    const d = dt.getDate()
+    const m = MESES[dt.getMonth()]
+    const y = dt.getFullYear()
+    const h = String(dt.getHours()).padStart(2, '0')
+    const min = String(dt.getMinutes()).padStart(2, '0')
+    return `${d} ${m} ${y}, ${h}:${min}`
   }
   return raw
+}
+
+function formatRespuesta(raw: string): string {
+  return formatFecha(raw)
 }
 
 function traducirComentario(comentario: string): string {
@@ -180,7 +187,7 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
                 </td>
                 <td className="px-4 py-3 text-sm" style={{ color: "var(--ink)" }}>{r.parametros || '—'}</td>
                 <td className="px-4 py-3"><StatusBadge estatus={r.estatus} /></td>
-                <td className="px-4 py-3 text-xs tabular whitespace-nowrap" style={{ color: "var(--ink-3)" }}>{r.fechaEnvio}</td>
+                <td className="px-4 py-3 text-xs tabular whitespace-nowrap" style={{ color: "var(--ink-3)" }}>{formatFecha(r.fechaEnvio)}</td>
                 <td className="px-4 py-3 text-xs" style={{ color: "var(--ink-3)" }}>{r.leido || '—'}</td>
                 <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: "var(--ink-3)" }}
                   title={r.respuesta || undefined}>{formatRespuesta(r.respuesta)}</td>
