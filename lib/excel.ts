@@ -89,11 +89,17 @@ function classifyError(comentario: string, estatus: string): string {
 }
 
 export function parseExcel(buffer: ArrayBuffer, filename: string): ParsedCampaign {
-  const wb = XLSX.read(buffer, { type: 'array' })
+  const wb = XLSX.read(buffer, { type: 'array', cellDates: true })
   const ws = wb.Sheets[wb.SheetNames[0]]
-  const raw = XLSX.utils.sheet_to_json<Record<string, string>>(ws)
+  const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws)
 
-  const str = (v: unknown): string => (v == null ? '' : String(v))
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const str = (v: unknown): string => {
+    if (v == null) return ''
+    if (v instanceof Date)
+      return `${v.getFullYear()}-${pad(v.getMonth() + 1)}-${pad(v.getDate())} ${pad(v.getHours())}:${pad(v.getMinutes())}:${pad(v.getSeconds())}`
+    return String(v)
+  }
 
   const rows: CampaignRow[] = raw.map((r, i) => ({
     id: String(i),
