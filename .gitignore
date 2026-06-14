@@ -42,3 +42,14 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# archivos temporales de análisis y pruebas
+tmp_*.xlsx
+analyze-excels.cjs
+analyze-excels.mjs
+test-upload.mjs
+verify-app.mjs
+
+# capturas de pantalla
+ss-*.png
+v-0*.png
