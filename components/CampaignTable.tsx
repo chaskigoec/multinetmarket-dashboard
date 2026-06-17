@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import * as XLSX from 'xlsx'
 import { CampaignRow, TableFilter, isFailed, isDeliveredUser, classifyError, normalizeStatus } from '@/lib/excel'
 
 function EcuadorFlag() {
@@ -548,17 +549,45 @@ export function CampaignTable({ rows, externalFilter }: { rows: CampaignRow[]; e
   const cur        = Math.min(page, totalPages)
   const slice      = sorted.slice((cur - 1) * pageSize, cur * pageSize)
 
-  const exportCSV = () => {
-    const h = ['Destino', 'Nombre', 'Estatus', 'Fecha de envío', 'Leído', 'Respondido', 'Fecha respuesta', 'Plantilla']
-    const lines = [
-      h.join(','),
-      ...filtered.map(r => [r.destino, r.parametros, normalizeStatus(r.estatus), r.fechaEnvio, r.leido, formatRespuesta(r.respuesta), r.fechaRespuesta ? formatRespuesta(r.fechaRespuesta) : '', r.plantilla]
-        .map(v => `"${v}"`).join(','))
+  const exportExcel = () => {
+    const headers = ['Destino', 'Nombre', 'Estatus', 'Fecha de envío', 'Leído', 'Respondido', 'Fecha respuesta', 'Plantilla', 'Comentario']
+    const data = filtered.map(r => [
+      formatDestino(r.destino),
+      r.parametros,
+      normalizeStatus(r.estatus),
+      formatFecha(r.fechaEnvio),
+      r.leido || '—',
+      formatRespuesta(r.respuesta),
+      r.fechaRespuesta ? formatRespuesta(r.fechaRespuesta) : '—',
+      r.plantilla,
+      r.comentario || '—',
+    ])
+
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...data])
+    ws['!cols'] = [
+      { wch: 16 }, // Destino
+      { wch: 18 }, // Nombre
+      { wch: 22 }, // Estatus
+      { wch: 20 }, // Fecha de envío
+      { wch: 8  }, // Leído
+      { wch: 24 }, // Respondido
+      { wch: 20 }, // Fecha respuesta
+      { wch: 28 }, // Plantilla
+      { wch: 40 }, // Comentario
     ]
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }))
-    a.download = 'detalle.csv'
+
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Detalle')
+
+    const buf  = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    const nombre = filtered[0]?.campanaNombre ?? 'detalle'
+    a.href     = url
+    a.download = `${nombre}.xlsx`
     a.click()
+    URL.revokeObjectURL(url)
   }
 
   type ColDef = { label: string; sort?: TableSortField }
@@ -605,11 +634,14 @@ export function CampaignTable({ rows, externalFilter }: { rows: CampaignRow[]; e
               style={{ border: "1px solid var(--border-soft)", background: "var(--surface)", color: "var(--ink)" }}
             />
             <button
-              onClick={exportCSV}
-              className="text-xs font-medium px-3 py-1.5 rounded-lg shrink-0"
+              onClick={exportExcel}
+              className="text-xs font-medium px-3 py-1.5 rounded-lg shrink-0 inline-flex items-center gap-1.5"
               style={{ border: "1px solid var(--border-soft)", background: "var(--surface)", color: "var(--ink-2)" }}
             >
-              Exportar CSV
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Exportar Excel
             </button>
           </div>
         </div>
