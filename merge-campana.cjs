@@ -58,17 +58,27 @@ function normalizePhone(raw) {
 
 // ── Leer CSV y construir mapa teléfono → respuesta ───────────
 const csvRows    = parseCSV(fs.readFileSync(csvPath, 'utf-8'))
-const responseMap = {}
 
+// Acumular respuestas únicas por contacto; conservar la fecha más reciente
+const rawMap = {}
 for (const r of csvRows) {
   const phone = normalizePhone(r['contacto'])
   if (!phone) continue
-  // Si el mismo número respondió varias veces, guardar la más reciente
-  const existing = responseMap[phone]
-  if (!existing || (r['responded'] || '') > (existing.fechaRespuesta || '')) {
+  const respuesta      = r['respuesta']  || ''
+  const fechaRespuesta = r['responded']  || ''
+  if (!rawMap[phone]) rawMap[phone] = { responses: new Set(), latestDate: '' }
+  if (respuesta) rawMap[phone].responses.add(respuesta)
+  if (fechaRespuesta > rawMap[phone].latestDate) rawMap[phone].latestDate = fechaRespuesta
+}
+
+// Unir respuestas distintas con " · " (ej: "Clic Formulario · Hola, qué gusto")
+const responseMap = {}
+for (const [phone, data] of Object.entries(rawMap)) {
+  const parts = [...data.responses]
+  if (parts.length > 0) {
     responseMap[phone] = {
-      respuesta:      r['respuesta']  || '',
-      fechaRespuesta: r['responded']  || '',
+      respuesta:      parts.join(' · '),
+      fechaRespuesta: data.latestDate,
     }
   }
 }
@@ -119,12 +129,19 @@ let conRespuesta = 0
 const merged = rows.map(r => {
   const phone = normalizePhone(String(r['Destino'] ?? ''))
   const resp  = responseMap[phone]
-  if (resp?.respuesta) conRespuesta++
+  if (resp?.respuesta || String(r['Respuesta'] ?? '').trim()) conRespuesta++
 
   const out = {}
   for (const col of COLS) {
     if (col === 'Respuesta') {
-      out[col] = resp?.respuesta || r['Respuesta'] || ''
+      const fromXlsx = String(r['Respuesta'] ?? '').trim()
+      const fromCsv  = resp?.respuesta ?? ''
+      // Si ambas fuentes tienen texto distinto, combinar con " · "
+      if (fromXlsx && fromCsv && fromXlsx !== fromCsv) {
+        out[col] = fromCsv + ' · ' + fromXlsx
+      } else {
+        out[col] = fromCsv || fromXlsx
+      }
     } else if (col === 'Fecha Respuesta') {
       out[col] = resp?.fechaRespuesta || r['Fecha Respuesta'] || ''
     } else {
