@@ -53,7 +53,7 @@ export function FilterPanel({ open, onClose, canales, initial, onApply }: Props)
       position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 50,
       background: 'var(--surface)', border: '1px solid var(--border-soft)',
       borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-      padding: 20, width: 480,
+      padding: 20, width: 'min(480px, calc(100vw - 32px))',
     }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 20px' }}>
 

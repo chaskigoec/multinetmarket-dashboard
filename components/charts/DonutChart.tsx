@@ -7,9 +7,11 @@ interface DonutChartProps {
   enviadosCanal: number
   entregados: number
   fallidos: number
+  onSegmentClick?: (key: string) => void
+  activeKey?: string | null
 }
 
-export function DonutChart({ total, entregados, fallidos }: DonutChartProps) {
+export function DonutChart({ total, entregados, fallidos, onSegmentClick, activeKey }: DonutChartProps) {
   // El 100% es entre entregados al usuario + fallidos
   const subtotal = entregados + fallidos
   const pct = (n: number) => subtotal > 0 ? Number((n / subtotal * 100).toFixed(1)) : 0
@@ -43,8 +45,18 @@ export function DonutChart({ total, entregados, fallidos }: DonutChartProps) {
                     dataKey="value"
                     startAngle={90}
                     endAngle={-270}
+                    cursor={onSegmentClick ? 'pointer' : undefined}
+                    onClick={(entry) => onSegmentClick?.((entry as { key: string }).key)}
                   >
-                    {segments.map((s, i) => <Cell key={i} fill={s.color} />)}
+                    {segments.map((s, i) => (
+                      <Cell
+                        key={i}
+                        fill={s.color}
+                        opacity={activeKey && activeKey !== s.key ? 0.3 : 1}
+                        stroke={activeKey === s.key ? s.color : 'none'}
+                        strokeWidth={activeKey === s.key ? 2 : 0}
+                      />
+                    ))}
                   </Pie>
                   <Tooltip
                     contentStyle={{ borderRadius: 8, border: "1px solid var(--border-soft)", fontSize: 12 }}
@@ -74,10 +86,14 @@ export function DonutChart({ total, entregados, fallidos }: DonutChartProps) {
         {/* Leyenda — porcentaje siempre sobre el total */}
         <div className="flex flex-col gap-3.5 flex-1 min-w-0">
           {segments.map(s => (
-            <div key={s.key}>
+            <div
+              key={s.key}
+              onClick={() => onSegmentClick?.(s.key)}
+              style={{ cursor: onSegmentClick ? 'pointer' : undefined, opacity: activeKey && activeKey !== s.key ? 0.4 : 1, transition: 'opacity 0.15s' }}
+            >
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: s.color }} />
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: s.color, outline: activeKey === s.key ? `2px solid ${s.color}` : 'none', outlineOffset: 1 }} />
                   <span className="text-xs truncate" style={{ color: "var(--ink-2)" }}>{s.label}</span>
                 </div>
                 <div className="flex items-center gap-2 ml-2 shrink-0">

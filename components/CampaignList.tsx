@@ -192,70 +192,72 @@ export function CampaignList({ campaigns }: CampaignListProps) {
           </div>
         </div>
       ) : (
-        <table className="w-full">
-          <thead>
-            <tr style={{ borderBottom: "1px solid var(--border-soft)", background: "#f9fafb" }}>
-              <th className={thCls} style={{ color: "var(--ink-3)" }} onClick={() => toggleSort('nombre')}>
-                Campaña <SortIcon active={sortField === 'nombre'} dir={sortDir} />
-              </th>
-              <th className={thCls} style={{ color: "var(--ink-3)" }}>Organización</th>
-              <th className={thCls} style={{ color: "var(--ink-3)" }} onClick={() => toggleSort('fecha')}>
-                Fecha de envío <SortIcon active={sortField === 'fecha'} dir={sortDir} />
-              </th>
-              <th className={`${thCls} text-right`} style={{ color: "var(--ink-3)" }} onClick={() => toggleSort('total')}>
-                Total <SortIcon active={sortField === 'total'} dir={sortDir} />
-              </th>
-              <th className={thCls} style={{ color: "var(--ink-3)" }}>Estado</th>
-              <th className="w-8" />
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map((c, idx) => {
-              const id = encodeId(c.filename)
-              return (
-                <tr key={c.id} className="row-hover group relative"
-                  style={{ borderTop: idx > 0 ? "1px solid var(--border-soft)" : undefined }}>
-                  <td className="px-5 py-4">
-                    <Link href={`/campaign/${id}`} className="block">
-                      <p className="text-sm font-semibold group-hover:text-[var(--brand)] transition-colors"
-                        style={{ color: "var(--ink)" }}>
-                        {c.nombre}
-                      </p>
-                    </Link>
-                  </td>
-                  <td className="px-5 py-4">
-                    <span className="text-xs font-medium px-2 py-0.5 rounded"
-                      style={{ background: "var(--brand-light)", color: "var(--brand)" }}>
-                      {getOrg(c)}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4 text-sm tabular" style={{ color: "var(--ink-2)" }}>
-                    {formatFecha(c.fechaCampana)}
-                  </td>
-                  <td className="px-5 py-4 text-sm font-semibold tabular text-right" style={{ color: "var(--ink)" }}>
-                    {c.metrics.total.toLocaleString('es-EC')}
-                  </td>
-                  <td className="px-5 py-4">
-                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
-                      style={{ background: "var(--success-bg)", color: "var(--success)", border: "1px solid #bbf7d0" }}>
-                      <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                      Completa
-                    </span>
-                  </td>
-                  <td className="px-3 py-4">
-                    <Link href={`/campaign/${id}`}>
-                      <svg width="14" height="14" viewBox="0 0 16 16" fill="none"
-                        className="opacity-25 group-hover:opacity-70 transition-opacity">
-                        <path d="M6 3l5 5-5 5" stroke="var(--ink)" strokeWidth="1.5"
-                          strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </Link>
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr style={{ borderBottom: "1px solid var(--border-soft)", background: "#f9fafb" }}>
+                <th className={thCls} style={{ color: "var(--ink-3)" }} onClick={() => toggleSort('nombre')}>
+                  Campaña <SortIcon active={sortField === 'nombre'} dir={sortDir} />
+                </th>
+                <th className={thCls} style={{ color: "var(--ink-3)" }}>Organización</th>
+                <th className={`${thCls} hidden sm:table-cell`} style={{ color: "var(--ink-3)" }} onClick={() => toggleSort('fecha')}>
+                  Fecha de envío <SortIcon active={sortField === 'fecha'} dir={sortDir} />
+                </th>
+                <th className={`${thCls} text-right hidden sm:table-cell`} style={{ color: "var(--ink-3)" }} onClick={() => toggleSort('total')}>
+                  Total <SortIcon active={sortField === 'total'} dir={sortDir} />
+                </th>
+                <th className={`${thCls} hidden sm:table-cell`} style={{ color: "var(--ink-3)" }}>Estado</th>
+                <th className="w-8" />
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((c, idx) => {
+                const id = encodeId(c.filename)
+                return (
+                  <tr key={c.id} className="row-hover group relative"
+                    style={{ borderTop: idx > 0 ? "1px solid var(--border-soft)" : undefined }}>
+                    <td className="px-5 py-4">
+                      <Link href={`/campaign/${id}`} className="block">
+                        <p className="text-sm font-semibold group-hover:text-[var(--brand)] transition-colors"
+                          style={{ color: "var(--ink)" }}>
+                          {c.nombre}
+                        </p>
+                      </Link>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className="text-xs font-medium px-2 py-0.5 rounded"
+                        style={{ background: "var(--brand-light)", color: "var(--brand)" }}>
+                        {getOrg(c)}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-sm tabular hidden sm:table-cell" style={{ color: "var(--ink-2)" }}>
+                      {formatFecha(c.fechaCampana)}
+                    </td>
+                    <td className="px-5 py-4 text-sm font-semibold tabular text-right hidden sm:table-cell" style={{ color: "var(--ink)" }}>
+                      {c.metrics.total.toLocaleString('es-EC')}
+                    </td>
+                    <td className="px-5 py-4 hidden sm:table-cell">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full"
+                        style={{ background: "var(--success-bg)", color: "var(--success)", border: "1px solid #bbf7d0" }}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                        Completa
+                      </span>
+                    </td>
+                    <td className="px-3 py-4">
+                      <Link href={`/campaign/${id}`}>
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"
+                          className="opacity-25 group-hover:opacity-70 transition-opacity">
+                          <path d="M6 3l5 5-5 5" stroke="var(--ink)" strokeWidth="1.5"
+                            strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </Link>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   )

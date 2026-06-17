@@ -34,6 +34,10 @@ export interface CampaignMetrics {
   novedadesDiarias: { fecha: string; entregados: number }[]
 }
 
+export type TableFilter =
+  | { type: 'donut'; key: 'usuario' | 'fallidos' }
+  | { type: 'error'; tipo: string }
+
 export interface ParsedCampaign {
   id: string
   nombre: string
@@ -64,7 +68,7 @@ function isDeliveredChannel(estatus: string): boolean {
   return estatus?.toUpperCase() === 'DELIVERED_CHANNEL'
 }
 
-function isDeliveredUser(estatus: string): boolean {
+export function isDeliveredUser(estatus: string): boolean {
   return ['DELIVERED_USER', 'READ'].includes(estatus?.toUpperCase())
 }
 
@@ -76,17 +80,62 @@ export function isFailed(estatus: string): boolean {
   return ['FAILED', 'UNDELIVERABLE', 'REJECTED'].includes(estatus?.toUpperCase())
 }
 
-function classifyError(comentario: string, estatus: string): string {
-  const c = (comentario ?? '').toLowerCase()
-  const e = (estatus ?? '').toLowerCase()
-  // "healthy ecosystem engagement" = YCloud indica baja interacción del número
-  if (c.includes('ecosystem') || c.includes('engagement') || c.includes('interaccion') ||
-      c.includes('interacción') || c.includes('low interaction'))            return 'Baja interacción'
-  if (c.includes('limite') || c.includes('límite') || c.includes('limit'))  return 'Límite excedido'
+export function classifyError(comentario: string, estatus: string): string {
+  const raw = comentario ?? ''
+  const c   = raw.toLowerCase()
+  const e   = (estatus ?? '').toLowerCase()
+
+  // Clasificación por código de error (mismos nombres que getErrorDetail en CampaignTable)
+  const codeMatch = raw.match(/\[?(\d{4,6})\]?/)
+  if (codeMatch) {
+    const code = codeMatch[1]
+    const CODE_LABELS: Record<string, string> = {
+      '130429': 'Límite de velocidad API',
+      '130472': 'Experimento de Meta',
+      '130497': 'Cuenta restringida por país',
+      '131000': 'Error desconocido',
+      '131005': 'Acceso denegado',
+      '131008': 'Parámetro faltante',
+      '131009': 'Parámetro inválido',
+      '131016': 'Servicio no disponible',
+      '131021': 'Remitente = destinatario',
+      '131026': 'Mensaje no entregable',
+      '131031': 'Cuenta bloqueada',
+      '131042': 'Problema de pago',
+      '131047': 'Ventana 24 h cerrada',
+      '131048': 'Spam detectado',
+      '131049': 'Baja interacción',
+      '131051': 'Tipo no soportado',
+      '131052': 'Error descarga multimedia',
+      '131053': 'Error subida multimedia',
+      '131056': 'Demasiados mensajes',
+      '131057': 'Cuenta en mantenimiento',
+      '132000': 'Parámetros de plantilla incorrectos',
+      '132001': 'Plantilla no aprobada',
+      '132005': 'Plantilla demasiado larga',
+      '132007': 'Contenido viola políticas',
+      '132012': 'Formato de parámetro incorrecto',
+      '132015': 'Plantilla pausada',
+      '132016': 'Plantilla deshabilitada',
+      '133004': 'Servidor no disponible',
+      '133010': 'Número no registrado',
+      '135000': 'Error genérico de parámetros',
+    }
+    if (CODE_LABELS[code]) return CODE_LABELS[code]
+  }
+
+  // Fallbacks por palabras clave
+  if (c.includes('ecosystem') || c.includes('engagement') ||
+      c.includes('interaccion') || c.includes('interacción') ||
+      c.includes('low interaction'))                              return 'Baja interacción'
+  if (c.includes('spam') || c.includes('rate limit'))            return 'Spam detectado'
+  if (c.includes('24 hour') || c.includes('24-hour'))            return 'Ventana 24 h cerrada'
+  if (c.includes('limite') || c.includes('límite') ||
+      c.includes('limit'))                                        return 'Límite excedido'
   if (c.includes('no entregable') || c.includes('undeliverable') ||
-      e.includes('undeliverable'))                                            return 'No entregable'
-  if (c.includes('rejected') || c.includes('rechazado'))                     return 'Rechazado'
-  if (c.includes('opted out') || c.includes('opt-out'))                      return 'Bloqueado por usuario'
+      e.includes('undeliverable'))                                return 'Mensaje no entregable'
+  if (c.includes('rejected') || c.includes('rechazado'))         return 'Rechazado'
+  if (c.includes('opted out') || c.includes('opt-out'))          return 'Bloqueado por usuario'
   return 'Fallo general'
 }
 

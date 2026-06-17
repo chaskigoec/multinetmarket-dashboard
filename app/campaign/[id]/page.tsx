@@ -3,11 +3,7 @@ import { notFound } from "next/navigation";
 import { readCampaign } from "@/lib/folder";
 import { decodeId } from "@/lib/utils";
 import { KPICard } from "@/components/KPICard";
-import { DonutChart } from "@/components/charts/DonutChart";
-import { PerformanceChart } from "@/components/charts/PerformanceChart";
-import { FailuresByErrorChart } from "@/components/charts/FailuresByErrorChart";
-import { DailyChart } from "@/components/charts/DailyChart";
-import { CampaignTable } from "@/components/CampaignTable";
+import { CampaignDetailClient } from "@/components/CampaignDetailClient";
 
 export const dynamic = "force-dynamic";
 
@@ -65,7 +61,7 @@ export default async function CampaignPage({ params }: Props) {
       </div>
 
       {/* KPI Cards — fila única */}
-      <div className="grid grid-cols-6 gap-3 fade-up fade-up-1">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 fade-up fade-up-1">
         <KPICard label="Total Destinatarios"    value={metrics.total}          icon={<IconTotal />}     accent="var(--ink-2)"   accentBg="#f1f5f9" />
         <KPICard label="Entregado por WhatsApp" value={metrics.enviadosCanal}  pct={metrics.enviadosCanalPct}  icon={<IconChannel />}   accent="var(--channel)"  accentBg="var(--channel-bg)" />
         <KPICard label="Al usuario"             value={metrics.entregados}     pct={metrics.entregadosPct}     icon={<IconDelivered />} accent="var(--success)"  accentBg="var(--success-bg)" />
@@ -74,18 +70,7 @@ export default async function CampaignPage({ params }: Props) {
         <KPICard label="Fallidos"               value={metrics.fallidos}       pct={metrics.fallidosPct}       icon={<IconFailed />}    accent="var(--danger)"   accentBg="var(--danger-bg)" />
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 fade-up fade-up-2">
-        <DonutChart total={metrics.total} enviadosCanal={metrics.enviadosCanal} entregados={metrics.entregados} fallidos={metrics.fallidos} />
-        <PerformanceChart total={metrics.total} enviadosCanal={metrics.enviadosCanal} entregados={metrics.entregados} leidos={metrics.leidos} respuestas={metrics.respuestas} />
-        <FailuresByErrorChart data={metrics.fallidosPorError} />
-        <DailyChart data={metrics.novedadesDiarias} />
-      </div>
-
-      {/* Table */}
-      <div className="fade-up fade-up-3">
-        <CampaignTable rows={rows} />
-      </div>
+      <CampaignDetailClient metrics={metrics} rows={rows} />
     </div>
   );
 }

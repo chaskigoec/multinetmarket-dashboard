@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { CampaignRow, isFailed, normalizeStatus } from '@/lib/excel'
+import { CampaignRow, TableFilter, isFailed, isDeliveredUser, classifyError, normalizeStatus } from '@/lib/excel'
 
 function EcuadorFlag() {
   return (
@@ -299,7 +299,7 @@ function MessageDrawer({ row, onClose }: { row: CampaignRow; onClose: () => void
       <div
         className="fixed right-0 top-0 h-full z-50 flex flex-col overflow-hidden"
         style={{
-          width: 480,
+          width: 'min(480px, 100vw)',
           background: 'var(--surface)',
           boxShadow: '-8px 0 40px rgba(0,0,0,0.14)',
           borderLeft: '1px solid var(--border-soft)',
@@ -459,27 +459,94 @@ function MessageDrawer({ row, onClose }: { row: CampaignRow; onClose: () => void
 
 const PAGE_SIZES = [10, 20, 50, 100]
 
-export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
+type TableSortField = 'destino' | 'parametros' | 'estatus' | 'fechaEnvio' | 'respuesta' | 'fechaRespuesta'
+type TableSortDir   = 'asc' | 'desc'
+
+function TableSortIcon({ active, dir }: { active: boolean; dir: TableSortDir }) {
+  return (
+    <span className="inline-flex flex-col ml-1 shrink-0" style={{ opacity: active ? 1 : 0.3 }}>
+      <svg width="7" height="7" viewBox="0 0 8 8" fill="currentColor"
+        style={{ opacity: active && dir === 'asc' ? 1 : 0.4 }}>
+        <path d="M4 1l3 4H1z"/>
+      </svg>
+      <svg width="7" height="7" viewBox="0 0 8 8" fill="currentColor"
+        style={{ opacity: active && dir === 'desc' ? 1 : 0.4 }}>
+        <path d="M4 7L1 3h6z"/>
+      </svg>
+    </span>
+  )
+}
+
+export function CampaignTable({ rows, externalFilter }: { rows: CampaignRow[]; externalFilter?: TableFilter | null }) {
   const [search, setSearch]       = useState('')
   const [page, setPage]           = useState(1)
   const [pageSize, setPageSize]   = useState(20)
   const [selected, setSelected]   = useState<CampaignRow | null>(null)
+  const [sortField, setSortField] = useState<TableSortField>('respuesta')
+  const [sortDir,   setSortDir]   = useState<TableSortDir>('desc')
 
-  const q = search.toLowerCase()
-  const filtered = !q ? rows : rows.filter(r =>
-    r.destino.includes(search) ||
-    r.parametros.toLowerCase().includes(q) ||
-    r.estatus.toLowerCase().includes(q) ||
-    normalizeStatus(r.estatus).toLowerCase().includes(q) ||
-    r.plantilla.toLowerCase().includes(q) ||
-    r.leido.toLowerCase().includes(q) ||
-    r.respuesta.toLowerCase().includes(q) ||
-    r.fechaEnvio.includes(search) ||
-    traducirComentario(r.comentario).toLowerCase().includes(q)
-  )
-  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
-  const cur = Math.min(page, totalPages)
-  const slice = filtered.slice((cur - 1) * pageSize, cur * pageSize)
+  const toggleSort = (field: TableSortField) => {
+    if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortField(field); setSortDir('asc') }
+  }
+
+  const q       = search.toLowerCase().trim()
+  const qDigits = search.replace(/\D/g, '')
+
+  const baseRows = externalFilter ? rows.filter(r => {
+    if (externalFilter.type === 'donut') {
+      if (externalFilter.key === 'usuario') return isDeliveredUser(r.estatus)
+      if (externalFilter.key === 'fallidos') return isFailed(r.estatus)
+    }
+    if (externalFilter.type === 'error') {
+      return isFailed(r.estatus) && classifyError(r.comentario, r.estatus) === externalFilter.tipo
+    }
+    return true
+  }) : rows
+
+  const filtered = !q ? baseRows : baseRows.filter(r => {
+    // Comparar dígitos puros del raw Y de la versión local (sin prefijo 593)
+    const destinoDigits  = r.destino.replace(/\D/g, '')
+    const localDigits    = formatDestino(r.destino).replace(/\D/g, '')
+    const matchesNumero  = qDigits.length >= 2 && (
+      destinoDigits.includes(qDigits) || localDigits.includes(qDigits)
+    )
+    return (
+      matchesNumero ||
+      formatDestino(r.destino).toLowerCase().includes(q) ||
+      r.parametros.toLowerCase().includes(q) ||
+      r.estatus.toLowerCase().includes(q) ||
+      normalizeStatus(r.estatus).toLowerCase().includes(q) ||
+      r.plantilla.toLowerCase().includes(q) ||
+      r.leido.toLowerCase().includes(q) ||
+      r.respuesta.toLowerCase().includes(q) ||
+      r.fechaEnvio.includes(search) ||
+      traducirComentario(r.comentario).toLowerCase().includes(q)
+    )
+  })
+
+  const sorted = [...filtered].sort((a, b) => {
+    let cmp = 0
+    switch (sortField) {
+      case 'destino':        cmp = a.destino.localeCompare(b.destino); break
+      case 'parametros':     cmp = a.parametros.localeCompare(b.parametros, 'es'); break
+      case 'estatus':        cmp = a.estatus.localeCompare(b.estatus); break
+      case 'fechaEnvio':     cmp = a.fechaEnvio.localeCompare(b.fechaEnvio); break
+      case 'respuesta': {
+        const aHas = a.respuesta.trim() ? 1 : 0
+        const bHas = b.respuesta.trim() ? 1 : 0
+        if (aHas !== bHas) return bHas - aHas  // con respuesta siempre primero
+        cmp = a.respuesta.localeCompare(b.respuesta, 'es')
+        break
+      }
+      case 'fechaRespuesta': cmp = a.fechaRespuesta.localeCompare(b.fechaRespuesta); break
+    }
+    return sortDir === 'asc' ? cmp : -cmp
+  })
+
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize))
+  const cur        = Math.min(page, totalPages)
+  const slice      = sorted.slice((cur - 1) * pageSize, cur * pageSize)
 
   const exportCSV = () => {
     const h = ['Destino', 'Nombre', 'Estatus', 'Fecha de envío', 'Leído', 'Respondido', 'Fecha respuesta', 'Plantilla']
@@ -494,23 +561,35 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
     a.click()
   }
 
-  const HEADERS = ['Destino', 'Nombre', 'Estatus', 'Fecha de envío', 'Leído', 'Respuesta', 'Fecha respuesta', 'Plantilla']
+  type ColDef = { label: string; sort?: TableSortField }
+  const COLS: ColDef[] = [
+    { label: 'Destino',         sort: 'destino',       },
+    { label: 'Nombre',          sort: 'parametros'     },
+    { label: 'Estatus',         sort: 'estatus'        },
+    { label: 'Fecha de envío',  sort: 'fechaEnvio'     },
+    { label: 'Leído'                                   },
+    { label: 'Respuesta',       sort: 'respuesta'      },
+    { label: 'Fecha respuesta', sort: 'fechaRespuesta' },
+    { label: 'Plantilla'                               },
+  ]
 
   return (
     <>
       <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--border-soft)", background: "var(--surface)" }}>
 
         {/* Toolbar */}
-        <div className="flex items-center justify-between px-5 py-3.5 gap-4"
-          style={{ borderBottom: "1px solid var(--border-soft)", background: "#f9fafb" }}>
-          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--ink-3)" }}>
+        <div
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-5 py-3.5 gap-3"
+          style={{ borderBottom: "1px solid var(--border-soft)", background: "#f9fafb" }}
+        >
+          <p className="text-xs font-semibold uppercase tracking-wider shrink-0" style={{ color: "var(--ink-3)" }}>
             Detalle de mensajes
           </p>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <select
               value={pageSize}
               onChange={e => { setPageSize(Number(e.target.value)); setPage(1) }}
-              className="text-xs outline-none rounded-lg px-2 py-1.5 cursor-pointer"
+              className="text-xs outline-none rounded-lg px-2 py-1.5 cursor-pointer shrink-0"
               style={{ border: "1px solid var(--border-soft)", background: "var(--surface)", color: "var(--ink-2)" }}
             >
               {PAGE_SIZES.map(s => (
@@ -522,12 +601,14 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
               placeholder="Buscar número, estado..."
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1) }}
-              className="text-sm outline-none rounded-lg px-3 py-1.5 w-56"
+              className="text-sm outline-none rounded-lg px-3 py-1.5 flex-1 min-w-[160px]"
               style={{ border: "1px solid var(--border-soft)", background: "var(--surface)", color: "var(--ink)" }}
             />
-            <button onClick={exportCSV}
-              className="text-xs font-medium px-3 py-1.5 rounded-lg"
-              style={{ border: "1px solid var(--border-soft)", background: "var(--surface)", color: "var(--ink-2)" }}>
+            <button
+              onClick={exportCSV}
+              className="text-xs font-medium px-3 py-1.5 rounded-lg shrink-0"
+              style={{ border: "1px solid var(--border-soft)", background: "var(--surface)", color: "var(--ink-2)" }}
+            >
               Exportar CSV
             </button>
           </div>
@@ -538,10 +619,17 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
           <table className="w-full text-sm">
             <thead>
               <tr style={{ borderBottom: "1px solid var(--border-soft)", background: "#f9fafb" }}>
-                {HEADERS.map(h => (
-                  <th key={h} className="text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider whitespace-nowrap"
-                    style={{ color: "var(--ink-3)" }}>
-                    {h}
+                {COLS.map(col => (
+                  <th
+                    key={col.label}
+                    className={`text-left px-4 py-2.5 text-xs font-semibold uppercase tracking-wider whitespace-nowrap${col.sort ? ' cursor-pointer select-none hover:text-[var(--ink)] transition-colors' : ''}`}
+                    style={{ color: "var(--ink-3)" }}
+                    onClick={col.sort ? () => toggleSort(col.sort!) : undefined}
+                  >
+                    <span className="inline-flex items-center">
+                      {col.label}
+                      {col.sort && <TableSortIcon active={sortField === col.sort} dir={sortDir} />}
+                    </span>
                   </th>
                 ))}
               </tr>
@@ -554,7 +642,7 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
                   style={{ borderTop: i > 0 ? "1px solid var(--border-soft)" : undefined }}
                   onClick={() => setSelected(r)}
                 >
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 whitespace-nowrap" style={{ minWidth: 140 }}>
                     <div className="flex items-center gap-1.5">
                       <EcuadorFlag />
                       <span className="font-mono text-xs tabular" style={{ color: "var(--ink-2)" }}>
@@ -566,12 +654,23 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
                   <td className="px-4 py-3"><StatusBadge estatus={r.estatus} /></td>
                   <td className="px-4 py-3 text-xs tabular whitespace-nowrap" style={{ color: "var(--ink-3)" }}>{formatFecha(r.fechaEnvio)}</td>
                   <td className="px-4 py-3 text-xs" style={{ color: "var(--ink-3)" }}>{r.leido || '—'}</td>
-                  <td className="px-4 py-3 text-xs whitespace-nowrap" style={{ color: "var(--ink-3)" }}
-                    title={r.respuesta || undefined}>{formatRespuesta(r.respuesta)}</td>
+                  <td className="px-4 py-3 text-xs" style={{ color: "var(--ink-3)", maxWidth: 180 }}>
+                    <div
+                      className="truncate"
+                      style={{ maxWidth: 168 }}
+                      title={r.respuesta || undefined}
+                    >
+                      {formatRespuesta(r.respuesta)}
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-xs whitespace-nowrap tabular" style={{ color: "var(--ink-3)" }}>
                     {r.fechaRespuesta ? formatRespuesta(r.fechaRespuesta) : '—'}
                   </td>
-                  <td className="px-4 py-3 text-xs font-mono" style={{ color: "var(--ink-3)" }}>{r.plantilla}</td>
+                  <td className="px-4 py-3 text-xs" style={{ color: "var(--ink-3)", maxWidth: 160 }}>
+                    <div className="truncate font-mono" style={{ maxWidth: 148 }} title={r.plantilla || undefined}>
+                      {r.plantilla}
+                    </div>
+                  </td>
                 </tr>
               ))}
               {!slice.length && (
@@ -589,9 +688,9 @@ export function CampaignTable({ rows }: { rows: CampaignRow[] }) {
         <div className="flex items-center justify-between px-5 py-3 text-xs"
           style={{ borderTop: "1px solid var(--border-soft)", color: "var(--ink-3)" }}>
           <span>
-            {filtered.length === 0 ? '0 registros' : (
+            {sorted.length === 0 ? '0 registros' : (
               <>
-                {((cur - 1) * pageSize + 1).toLocaleString('es-EC')}–{Math.min(cur * pageSize, filtered.length).toLocaleString('es-EC')} de {filtered.length.toLocaleString('es-EC')}
+                {((cur - 1) * pageSize + 1).toLocaleString('es-EC')}–{Math.min(cur * pageSize, sorted.length).toLocaleString('es-EC')} de {sorted.length.toLocaleString('es-EC')}
               </>
             )}
           </span>

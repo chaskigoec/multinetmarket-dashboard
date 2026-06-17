@@ -39,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Thin brand bar */}
         <div style={{ height: 3, background: "var(--brand)" }} />
 
-        <main className="max-w-6xl mx-auto px-6 py-8">
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
           {children}
         </main>
       </body>
