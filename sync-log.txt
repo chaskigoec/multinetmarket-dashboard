@@ -366,3 +366,22 @@
 [2026-06-18 09:53:34]   1. Descarga el CSV actualizado de Datum y reemplázalo en: C:\Users\PaoloJácome\OneDrive - ChaskiGo\Documentos - OPERACIONES CHASKI\PROYECTOS\2026\MULTINETMARKET\ETAPA\Procesar
 [2026-06-18 09:53:34]   2. Si el reporte base cambió, reemplaza el .xlsx también.
 [2026-06-18 09:53:34]   3. Vuelve a ejecutar: .\merge-y-sync.ps1
+[2026-06-18 11:30:43] === Merge y Sync MultinetMarket → https://multinetmarket-dashboard.vercel.app ===
+[2026-06-18 11:30:44] Base (xlsx):      d72bc141-5572-4c56-8386-8810b9370ec3.xlsx
+[2026-06-18 11:30:44] Respuestas (csv): nuevos_planes-export-2026-06-17-20-02-04.csv
+[2026-06-18 11:30:44] Ejecutando merge...
+[2026-06-18 11:30:44] Merge OK: etapa_16062026215944
+[2026-06-18 11:30:44]   Filas totales:     250
+[2026-06-18 11:30:44]   Con respuesta:     15
+[2026-06-18 11:30:44]   Respuestas en CSV: 10
+[2026-06-18 11:30:44]   Archivo generado:  C:\Users\PaoloJácome\OneDrive - ChaskiGo\Documentos - OPERACIONES CHASKI\PROYECTOS\2026\MULTINETMARKET\ETAPA\Resultados\etapa_16062026215944.xlsx
+[2026-06-18 11:30:44] Verificando versión anterior en Redis...
+[2026-06-18 11:30:48]   Versión anterior eliminada de Redis: etapa_16062026215944.xlsx
+[2026-06-18 11:30:48] Subiendo a Vercel: etapa_16062026215944.xlsx
+[2026-06-18 11:30:50]   Subida OK: etapa_16062026215944 (id: ZXRhcGFfMTYwNjIwMjYyMTU5NDQueGxzeA)
+[2026-06-18 11:30:50] === Completado. Dashboard: https://multinetmarket-dashboard.vercel.app ===
+[2026-06-18 11:30:50] 
+[2026-06-18 11:30:50] Próximos pasos cuando haya nuevas respuestas:
+[2026-06-18 11:30:50]   1. Descarga el CSV actualizado de Datum y reemplázalo en: C:\Users\PaoloJácome\OneDrive - ChaskiGo\Documentos - OPERACIONES CHASKI\PROYECTOS\2026\MULTINETMARKET\ETAPA\Procesar
+[2026-06-18 11:30:50]   2. Si el reporte base cambió, reemplaza el .xlsx también.
+[2026-06-18 11:30:50]   3. Vuelve a ejecutar: .\merge-y-sync.ps1

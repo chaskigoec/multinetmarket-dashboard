@@ -42,8 +42,9 @@ export interface ParsedCampaign {
   id: string
   nombre: string
   filename: string
-  fechaCampana: string    // fecha real del envío (del Excel)
-  fechaCarga: string      // fecha de lectura del archivo
+  fechaCampana: string           // fecha real del envío (del Excel)
+  fechaCarga: string             // fecha de lectura del archivo
+  fechaUltimaActualizacion?: string  // fecha más reciente entre todos los eventos del Excel
   rows: CampaignRow[]
   metrics: CampaignMetrics
 }
@@ -211,6 +212,15 @@ export function parseExcel(buffer: ArrayBuffer, filename: string): ParsedCampaig
   const fechas = rows.map(r => r.fechaEnvio).filter(Boolean).sort()
   const fechaCampana = fechas[0] ?? new Date().toISOString().replace('T', ' ').slice(0, 19)
 
+  // Fecha de última actualización: el evento más reciente registrado en el Excel
+  const allEventDates = rows.flatMap(r => [
+    r.fechaRespuesta,
+    r.fechaLectura,
+    r.fechaEntregaUsuario,
+    r.fechaEntregaCanal,
+  ]).filter(Boolean).sort()
+  const fechaUltimaActualizacion = allEventDates.at(-1)
+
   const campanaNombre = rows[0]?.campanaNombre || filename.replace(/\.xlsx?$/i, '')
 
   return {
@@ -219,6 +229,7 @@ export function parseExcel(buffer: ArrayBuffer, filename: string): ParsedCampaig
     filename,
     fechaCampana,
     fechaCarga: new Date().toISOString(),
+    fechaUltimaActualizacion,
     rows,
     metrics: {
       total,

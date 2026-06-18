@@ -53,3 +53,5 @@ verify-app.mjs
 # capturas de pantalla
 ss-*.png
 v-0*.png
+
+.vercel
