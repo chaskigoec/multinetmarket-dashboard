@@ -25,8 +25,20 @@ export default async function CampaignPage({ params }: Props) {
   const { metrics, rows, nombre, fechaCampana, fechaUltimaActualizacion } = campaign;
   const MESES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
   function fmtShort(raw: string): string {
-    const d = new Date(raw.replace(' ', 'T'))
+    const s = raw.replace(' ', 'T')
+    const d = new Date(s)
     if (isNaN(d.getTime())) return raw
+    // Si la cadena trae offset explícito (ej: -05:00), convertir a hora Ecuador
+    // porque Vercel corre en UTC y getHours() daría la hora UTC
+    if (/[Z]$|[+-]\d{2}:\d{2}$/.test(s)) {
+      const p = new Intl.DateTimeFormat('es-EC', {
+        timeZone: 'America/Guayaquil',
+        year: 'numeric', month: '2-digit', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', hour12: false,
+      }).formatToParts(d).reduce<Record<string, string>>((acc, x) => ({ ...acc, [x.type]: x.value }), {})
+      return `${parseInt(p.day)} ${MESES[parseInt(p.month) - 1]} ${p.year}, ${p.hour}:${p.minute}`
+    }
+    // Sin offset: la cadena ya está en hora Ecuador guardada como texto plano
     return `${d.getDate()} ${MESES[d.getMonth()]} ${d.getFullYear()}, ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
   }
 
