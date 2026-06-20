@@ -59,12 +59,20 @@ function normalizePhone(raw) {
 // ── Leer CSV y construir mapa teléfono → respuesta ───────────
 const csvRows    = parseCSV(fs.readFileSync(csvPath, 'utf-8'))
 
+// Si el CSV tiene campo 'accion', deriva la etiqueta legible; si no, usa 'respuesta' tal cual
+function accionLabel(row) {
+  const accion = (row['accion'] || '').trim().toLowerCase()
+  if (accion === 'agente') return 'Clic Agente'
+  if (accion === 'url')    return 'Clic Formulario'
+  return row['respuesta'] || ''
+}
+
 // Acumular respuestas únicas por contacto; conservar la fecha más reciente
 const rawMap = {}
 for (const r of csvRows) {
   const phone = normalizePhone(r['contacto'])
   if (!phone) continue
-  const respuesta      = r['respuesta']  || ''
+  const respuesta      = accionLabel(r)
   const fechaRespuesta = r['responded']  || ''
   if (!rawMap[phone]) rawMap[phone] = { responses: new Set(), latestDate: '' }
   if (respuesta) rawMap[phone].responses.add(respuesta)
